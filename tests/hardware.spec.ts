@@ -4,12 +4,23 @@ import { DEVICE_REFERENCE, hardwareControlById } from '../src/components/device/
 async function clickHardware(page: Page, id: string) {
   const control = hardwareControlById.get(id);
   if (!control) throw new Error(`Unknown hardware control: ${id}`);
+  // Coordinates are only valid once the camera zoom is not moving the device.
+  await expect(page.locator('.device-stage')).not.toHaveAttribute('data-zoom', /^(enter|exit)$/);
   const stage = await page.locator('.device-stage').boundingBox();
   if (!stage) throw new Error('Device stage is not visible');
   await page.mouse.click(
     stage.x + (control.x + control.width / 2) / DEVICE_REFERENCE.width * stage.width,
     stage.y + (control.y + control.height / 2) / DEVICE_REFERENCE.height * stage.height,
   );
+}
+
+/**
+ * Reading apps zoom the camera in on desktop, which can push the hardware Back key off screen.
+ * Wait for the zoom to settle, then activate the key itself rather than clicking its coordinates.
+ */
+async function hardBack(page: Page) {
+  await expect(page.locator('.device-stage')).not.toHaveAttribute('data-zoom', /^(enter|exit)$/);
+  await page.locator('[data-control-id="control-back"]').dispatchEvent('click');
 }
 
 async function hardwarePoint(page: Page, id: string) {
@@ -81,11 +92,11 @@ test('D-pad, trackball, call, and back controls route the existing screen', asyn
   await expect(page.getByRole('button', { name: 'Open Experience' })).toHaveAttribute('aria-current', 'true');
   await clickHardware(page, 'dpad-center');
   await expect(page.getByText('Selected path')).toBeVisible();
-  await clickHardware(page, 'control-back');
+  await hardBack(page);
   await expect(page.getByRole('button', { name: 'Open Projects' })).toBeVisible();
   await clickHardware(page, 'control-call');
   await expect(page.getByText('Open channel')).toBeVisible();
-  await clickHardware(page, 'control-back');
+  await hardBack(page);
   await clickHardware(page, 'control-trackball');
   await expect(page.getByText('Selected path')).toBeVisible();
 });
@@ -214,7 +225,7 @@ test('while an app is open the terminal stays closed and back/Escape close the a
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Open Projects' })).toBeVisible();
   await page.getByRole('button', { name: 'Open Notes' }).click();
-  await clickHardware(page, 'control-back');
+  await hardBack(page);
   await expect(page.getByRole('button', { name: 'Open Notes' })).toBeVisible();
   await expect(page.getByText('Placeholder Track')).toHaveCount(0);
 });

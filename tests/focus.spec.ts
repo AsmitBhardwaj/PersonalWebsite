@@ -110,23 +110,119 @@ test.describe('focus mode in landscape and on desktop', () => {
     expect(await minBodyFont(page)).toBeGreaterThanOrEqual(14);
   });
 
-  test('desktop keeps apps inside the device', async ({ page }) => {
+  test('desktop keeps games inside the device with no zoom', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
-    await openApp(page, 'Projects');
-    await expect(page.getByRole('heading', { name: 'Platter' })).toBeVisible();
+    await openApp(page, 'Type');
+    await expect(page.locator('.type-game')).toBeVisible();
     await expect(stage(page)).not.toHaveAttribute('data-focus', /.*/);
+    await expect(stage(page)).not.toHaveAttribute('data-zoom', /.*/);
+    expect(await wrapperScale(page)).toBe(1);
     const shell = (await page.locator('.screen-shell').boundingBox())!;
     expect(shell.width).toBeLessThan(500);
   });
 
-  test('resizing from desktop to phone width enters focus mode, and back leaves it', async ({ page }) => {
+  test('resizing across modes: zoom on desktop, focus on a phone, zoom again', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await openApp(page, 'Projects');
+    await expect(stage(page)).toHaveAttribute('data-zoom', 'on');
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(stage(page)).toHaveAttribute('data-focus', 'on');
+    await expect(stage(page)).not.toHaveAttribute('data-zoom', /.*/);
+    expect(await wrapperScale(page)).toBe(1);
     await expectFillsViewport(page);
     await page.setViewportSize({ width: 1440, height: 900 });
+    await expect(stage(page)).toHaveAttribute('data-zoom', 'on');
     await expect(stage(page)).not.toHaveAttribute('data-focus', /.*/);
     await expect(page.getByRole('heading', { name: 'Platter' })).toBeVisible();
+  });
+});
+
+const wrapperScale = (page: Page) => page.evaluate(() => {
+  const transform = getComputedStyle(document.querySelector('.device-wrap')!).transform;
+  return transform === 'none' ? 1 : new DOMMatrix(transform).a;
+});
+
+for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 720 }]) {
+  test.describe(`camera zoom at ${viewport.width}x${viewport.height}`, () => {
+    test.use({ viewport });
+
+    test('reading apps zoom the device, text is 16px+, page does not scroll, Escape zooms out', async ({ page }) => {
+      await openApp(page, 'Projects');
+      await expect(stage(page)).toHaveAttribute('data-zoom', 'on');
+      await expect(stage(page)).not.toHaveAttribute('data-focus', /.*/);
+      const shell = (await page.locator('.screen-shell').boundingBox())!;
+      expect(shell.height / viewport.height).toBeGreaterThan(0.74);
+      expect(shell.height / viewport.height).toBeLessThan(0.82);
+      expect(Math.abs(shell.x + shell.width / 2 - viewport.width / 2)).toBeLessThan(3);
+      expect(Math.abs(shell.y + shell.height / 2 - viewport.height / 2)).toBeLessThan(3);
+      const effective = await page.evaluate(() => {
+        const p = document.querySelector('.project-body p')!;
+        return parseFloat(getComputedStyle(p).fontSize) * p.getBoundingClientRect().height / (p as HTMLElement).offsetHeight;
+      });
+      expect(effective).toBeGreaterThanOrEqual(16);
+      const scroll = await page.evaluate(() => ({ overflow: getComputedStyle(document.documentElement).overflow, fits: document.documentElement.scrollHeight <= innerHeight }));
+      expect(scroll).toEqual({ overflow: 'hidden', fits: true });
+      await page.mouse.wheel(0, 600);
+      expect(await page.evaluate(() => window.scrollY)).toBe(0);
+
+      // The dispatcher still routes keys to the app, and the hitboxes are scaled with the device.
+      await page.keyboard.press('ArrowDown');
+      await expect.poll(() => page.locator('.project-scroll').evaluate((el) => el.scrollTop)).toBeGreaterThan(0);
+      const space = (await page.locator('[data-control-id="key-space"]').boundingBox())!;
+      expect(space.width).toBeGreaterThan(288 / 1586 * 900 * 1.5);
+
+      await page.keyboard.press('Escape');
+      await expect(stage(page)).not.toHaveAttribute('data-zoom', /.*/);
+      await homeVisible(page);
+      expect(await wrapperScale(page)).toBe(1);
+    });
+
+    test('Home on the screen zooms back out, and reduced motion crossfades', async ({ page }) => {
+      await page.emulateMedia({ reducedMotion: 'reduce' });
+      await openApp(page, 'About');
+      await expect(stage(page)).toHaveAttribute('data-zoom', 'on');
+      expect(await wrapperScale(page)).toBeGreaterThan(2);
+      await page.locator('.screen-nav').getByRole('button', { name: 'Phone home', exact: true }).click();
+      await expect(stage(page)).not.toHaveAttribute('data-zoom', /.*/);
+      await homeVisible(page);
+    });
+  });
+}
+
+test.describe('touch keyboard for games on a phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test('Type is playable by tapping the on-screen keys', async ({ page }) => {
+    await openApp(page, 'Type');
+    await expect(stage(page)).toHaveAttribute('data-focus', 'on');
+    const dock = (await page.locator('.touch-kbd').boundingBox())!;
+    expect(dock.width).toBeGreaterThan(360); // full width
+    expect(dock.y + dock.height).toBeGreaterThan(844 - 20); // along the bottom
+    const field = (await page.locator('.type-field').boundingBox())!;
+    expect(field.y + field.height).toBeLessThanOrEqual(dock.y);
+    expect(field.height).toBeGreaterThan(300);
+    await expect(page.locator('.touch-arrows')).toHaveCount(0); // Type does not use arrows
+
+    const key = (id: string) => page.locator(`.touch-key[data-control-id="${id}"]`);
+    await key('key-enter').tap();
+    await expect(page.locator('.type-word').first()).toBeVisible();
+
+    // A held key lights up and releases.
+    await key('key-q').dispatchEvent('pointerdown');
+    await expect(key('key-q')).toHaveClass(/is-pressed/);
+    await key('key-q').dispatchEvent('pointerup');
+    await expect(key('key-q')).not.toHaveClass(/is-pressed/);
+    expect(await page.evaluate(() => document.activeElement?.tagName)).not.toBe('INPUT');
+
+    // Tap out whole words until one clears and the score goes up.
+    const score = () => page.locator('.type-hud b').first().innerText().then(Number);
+    for (let attempt = 0; attempt < 5 && (await score()) === 0; attempt++) {
+      const word = (await page.locator('.type-word:not(.type-pop)').last().innerText()).trim();
+      for (const letter of word) {
+        const id = /[a-z]/.test(letter) ? `key-${letter}` : letter === ' ' ? 'key-space' : null;
+        if (id) await key(id).tap();
+      }
+    }
+    expect(await score()).toBeGreaterThan(0);
   });
 });

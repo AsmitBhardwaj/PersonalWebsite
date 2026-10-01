@@ -25,6 +25,14 @@ export interface AppDefinition {
   /** Home screen icon tile colour. */
   tone: string;
   component: ComponentType<AppProps>;
+  /**
+   * How the app opens on small and large screens.
+   * 'read': focus mode on phones/tablets, a camera zoom into the screen on desktop.
+   * 'play': stays in-device on desktop so the keyboard stays visible; focus mode with an on-screen keyboard on phones/tablets.
+   */
+  presentation: 'read' | 'play';
+  /** 'play' apps on phones/tablets: show the arrow-key strip above the keyboard. Defaults to true. */
+  touchDpad?: boolean;
   /** Not shown on the home screen or reachable from the terminal, but can still be opened by id. */
   hidden?: boolean;
   /** Extra terminal command names that open this app. */

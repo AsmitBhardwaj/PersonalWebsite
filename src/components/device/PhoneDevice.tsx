@@ -1,4 +1,5 @@
 import { forwardRef, useRef, useState } from 'react';
+import { appById } from '../../apps/registry';
 import type { AppId } from '../../apps/types';
 import { DeviceBase, GroundShadow } from './DeviceBase';
 import { DisplayAssembly } from './DisplayAssembly';
@@ -18,7 +19,9 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
   const hardwareEnabled = phase === 'open';
   const shellRef = useRef<HTMLDivElement>(null);
-  const { focused, requestHome: goHome } = useFocusMode({ shellRef, enabled: hardwareEnabled, activeApp, closeApp: () => setActiveApp(null) });
+  const app = activeApp ? appById.get(activeApp) : undefined;
+  const presentation = app?.presentation ?? 'read';
+  const { focused, requestHome: goHome } = useFocusMode({ shellRef, enabled: hardwareEnabled, activeApp, presentation, closeApp: () => setActiveApp(null) });
   const hardware = useHardwareKeyboard({
     enabled: hardwareEnabled,
     activeApp,
@@ -28,7 +31,7 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
     setHighlightedIndex,
   });
 
-  return <div className="device-stage" ref={ref} data-ready={ready} data-phase={phase}>
+  return <div className="device-stage" ref={ref} data-ready={ready} data-phase={phase} data-presentation={presentation}>
     <GroundShadow/>
     <section className="phone" aria-label="Interactive Sidekick-inspired portfolio device">
       <DeviceBase/>
@@ -37,6 +40,13 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
         booting={booting}
         activeApp={activeApp}
         focused={focused}
+        touchKeys={focused && presentation === 'play' ? {
+          dpad: app?.touchDpad ?? true,
+          pressedIds: hardware.pressedIds,
+          onActivate: hardware.activateControl,
+          onPress: hardware.pressControl,
+          onRelease: hardware.releaseControl,
+        } : null}
         shellRef={shellRef}
         highlightedIndex={highlightedIndex}
         terminal={hardware.terminal}

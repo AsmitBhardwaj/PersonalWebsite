@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { FOCUS_MAX_SCREEN_HEIGHT, viewportBox, wantsFocus } from './useFocusMode';
+import { FOCUS_MAX_SCREEN_HEIGHT, openModeFor, viewportBox, wantsFocus, zoomFor } from './useFocusMode';
 
 describe('focus mode sizing', () => {
   it('turns on only when the rendered screen is shorter than the threshold', () => {
@@ -20,5 +20,19 @@ describe('focus mode sizing', () => {
     // Shell drawn at half size, 40px from the viewport edges.
     const box = viewportBox(local, { left: 40, top: 40, width: 50 }, { width: 200, height: 400 });
     expect(box).toEqual({ left: -70, top: -70, width: 400, height: 800 });
+  });
+
+  it('picks the open mode from presentation and screen size', () => {
+    expect(openModeFor('read', 88)).toBe('focus');
+    expect(openModeFor('play', 88)).toBe('focus');
+    expect(openModeFor('read', 269)).toBe('zoom');
+    expect(openModeFor('play', 269)).toBe('none');
+  });
+
+  it('zooms the screen to ~78% of the viewport height, capped by width', () => {
+    expect(zoomFor({ width: 349, height: 269 }, { width: 1440, height: 900 })).toBeCloseTo(2.61, 1);
+    expect(zoomFor({ width: 294, height: 226 }, { width: 1280, height: 720 })).toBeCloseTo(2.48, 1);
+    expect(zoomFor({ width: 600, height: 200 }, { width: 800, height: 900 })).toBeCloseTo(1.23, 1); // width-limited
+    expect(zoomFor({ width: 600, height: 700 }, { width: 800, height: 600 })).toBe(1); // never zooms out
   });
 });

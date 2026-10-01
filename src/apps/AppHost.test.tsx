@@ -15,7 +15,7 @@ function Game({ input, paused }: AppProps) {
 const tick = vi.fn();
 const frame = vi.fn();
 
-const makeApp = (overrides: Partial<AppDefinition> = {}): AppDefinition => ({ id: 'game', label: 'Game', icon: Music, tone: '#000', component: Game, ...overrides });
+const makeApp = (overrides: Partial<AppDefinition> = {}): AppDefinition => ({ id: 'game', label: 'Game', icon: Music, tone: '#000', component: Game, presentation: 'play', ...overrides });
 
 describe('AppHost lifecycle', () => {
   it('calls onOpen and onClose, stops timers, and clears held keys on close', () => {
