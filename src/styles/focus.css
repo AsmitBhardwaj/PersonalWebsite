@@ -1,7 +1,7 @@
 /* Focus mode: on small screens an open app grows out of the device to fill the viewport (see useFocusMode).
    Layout vars below feed the status bar, nav bar and game HUD so chrome keeps a usable size. */
 html.is-focus-mode, html.is-focus-mode body { overflow: hidden; overscroll-behavior: none; }
-html.is-focus-mode .depth-hint, html.is-focus-mode .skip-intro, html.is-focus-mode .device-controls { display: none; }
+html.is-focus-mode .depth-hint, html.is-focus-mode .skip-intro, html.is-focus-mode .device-controls, html.is-focus-mode .open-prompt { display: none; }
 
 .device-stage[data-focus] { --focus-bezel: 8px; --status-h: 28px; --nav-h: 56px; --hud-h: 44px; }
 @media (max-height: 480px) { .device-stage[data-focus] { --focus-bezel: 6px; --status-h: 24px; --nav-h: 46px; --hud-h: 36px; } }

@@ -107,6 +107,8 @@ export default function App() {
     {/* Device-level controls. Music controls are meant to join the sound toggle here. */}
     <div className="device-controls"><SoundToggle/></div>
     {introActive && <button className="skip-intro" onClick={finishIntro}>Skip intro</button>}
-    <div className="depth-hint" aria-hidden="true"><span/>{introPhase === 'open' ? 'Explore inside the device' : 'Tap, drag or press Enter to open'}</div>
+    {introPhase === 'open'
+      ? <div className="depth-hint" aria-hidden="true"><span/>Explore inside the device</div>
+      : introPhase === 'wake' && <button type="button" className="open-prompt" onClick={requestOpen}><i aria-hidden="true"/>Tap, drag or press Enter to open</button>}
   </main>;
 }

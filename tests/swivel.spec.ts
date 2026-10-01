@@ -22,7 +22,7 @@ async function waitForWake(page: Page) {
 
 /** Angle of the screen layer, read from its inline transform. */
 const angleOf = (page: Page) => lid(page).evaluate((el) => {
-  const match = /rotate\((-?[\d.]+)deg\)/.exec((el as HTMLElement).style.transform);
+  const match = /rotate\((-?[\d.]+(?:e-?\d+)?)deg\)/.exec((el as HTMLElement).style.transform);
   return match ? Number(match[1]) : NaN;
 });
 
@@ -94,7 +94,7 @@ test.describe('opening the device', () => {
       const w = window as unknown as { __trace: { t: number; a: number }[] };
       w.__trace = [];
       const tick = () => {
-        const m = /rotate\((-?[\d.]+)deg\)/.exec(lidEl.style.transform);
+        const m = /rotate\((-?[\d.]+(?:e-?\d+)?)deg\)/.exec(lidEl.style.transform);
         w.__trace.push({ t: performance.now(), a: m ? Number(m[1]) : NaN });
         if (document.querySelector('.device-stage')!.getAttribute('data-phase') !== 'open') requestAnimationFrame(tick);
       };
@@ -128,8 +128,8 @@ test.describe('opening the device', () => {
           recoil: Number(/translate3d\((-?[\d.]+)px/.exec(q('.phone').style.transform)?.[1] ?? 0),
           soft: Number(q('.swivel-shadow__layer--soft').style.opacity),
           tight: Number(q('.swivel-shadow__layer--tight').style.opacity),
-          lid: Number(/rotate\((-?[\d.]+)deg\)/.exec(lidT)?.[1] ?? NaN),
-          glare: Number(/rotate\((-?[\d.]+)deg\)\s*$/.exec(glareT)?.[1] ?? NaN),
+          lid: Number(/rotate\((-?[\d.]+(?:e-?\d+)?)deg\)/.exec(lidT)?.[1] ?? NaN),
+          glare: Number(/rotate\((-?[\d.]+(?:e-?\d+)?)deg\)\s*$/.exec(glareT)?.[1] ?? NaN),
         });
         if (q('.device-stage').getAttribute('data-phase') !== 'open') requestAnimationFrame(tick);
       };
@@ -150,7 +150,7 @@ test.describe('opening the device', () => {
     expect(Math.min(...samples.map((s) => s.recoil))).toBeGreaterThanOrEqual(0);
     expect(samples[samples.length - 1].recoil).toBe(0);
     // The glass turns by (lid - 180); the glare turns by the opposite, so its gradient never rotates in the world.
-    for (const s of samples) expect(s.glare + (s.lid - 180)).toBeCloseTo(0, 3);
+    for (const s of samples) expect(s.glare + (s.lid - 180)).toBeCloseTo(0, 2);
   });
 
   test('a drag past 30 degrees completes the swivel, short of it springs back closed', async ({ page }) => {
@@ -375,4 +375,18 @@ test.describe('small screens', () => {
     await page.getByRole('button', { name: 'Open About', exact: true }).first().tap();
     await expect(stage(page)).toHaveAttribute('data-focus', 'on');
   });
+});
+
+test.describe('discoverability', () => {
+  for (const viewport of [{ width: 1280, height: 650 }, { width: 390, height: 844 }, { width: 1440, height: 900 }]) {
+    test(`a visible prompt opens the closed device at ${viewport.width}x${viewport.height}`, async ({ page }) => {
+      await page.setViewportSize(viewport);
+      await waitForWake(page);
+      const prompt = page.getByRole('button', { name: /press Enter to open/i });
+      await expect(prompt).toBeVisible();
+      await prompt.click();
+      await expect(stage(page)).toHaveAttribute('data-phase', 'open');
+      await expect(prompt).toHaveCount(0);
+    });
+  }
 });

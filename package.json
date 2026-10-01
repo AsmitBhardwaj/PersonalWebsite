@@ -8,6 +8,7 @@
     "assets:audio": "node scripts/generate-clack.mjs",
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
+    "preview": "vite preview",
     "lint": "eslint .",
     "test": "vitest run",
     "test:e2e": "playwright test",
