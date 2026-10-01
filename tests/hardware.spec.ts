@@ -225,8 +225,8 @@ test('while an app is open the terminal stays closed and back/Escape close the a
   await expect(page.locator('.hardware-terminal')).toHaveCount(0);
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Open Projects' })).toBeVisible();
-  await page.getByRole('button', { name: 'Open Notes' }).click();
+  await page.getByRole('button', { name: 'Open Now' }).click();
   await hardBack(page);
-  await expect(page.getByRole('button', { name: 'Open Notes' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open Now' })).toBeVisible();
   await expect(page.getByText('Placeholder Track')).toHaveCount(0);
 });

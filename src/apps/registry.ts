@@ -16,7 +16,7 @@ export const apps: AppDefinition[] = [
   { id: 'projects', label: 'Projects', icon: BriefcaseBusiness, tone: '#e96853', component: ProjectsApp, presentation: 'read', aliases: ['proj'] },
   { id: 'experience', label: 'Experience', icon: NotebookPen, tone: '#e0af45', component: ExperienceApp, presentation: 'read', aliases: ['exp'] },
   { id: 'about', label: 'About', icon: CircleUserRound, tone: '#6ba7c9', component: AboutApp, presentation: 'read', aliases: ['bio'] },
-  { id: 'notes', label: 'Notes', icon: StickyNote, tone: '#87a66e', component: NotesApp, presentation: 'read' },
+  { id: 'notes', label: 'Now', icon: StickyNote, tone: '#87a66e', component: NotesApp, presentation: 'read', aliases: ['now'] },
   { id: 'contact', label: 'Contact', icon: Contact, tone: '#ba7a9a', component: ContactApp, presentation: 'read' },
   { id: 'type', label: 'Type', icon: Keyboard, tone: '#8a7bc4', component: TypeApp, presentation: 'play', touchDpad: false, aliases: ['game'] },
   // Music is parked until the player ships: keep the app, hide it everywhere.

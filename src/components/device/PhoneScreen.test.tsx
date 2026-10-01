@@ -13,9 +13,9 @@ describe('PhoneScreen', () => {
 
   it('opens a note inside the phone', () => {
     render(<PhoneScreen ready booting={false}/>);
-    fireEvent.click(screen.getByRole('button', { name: /^open notes$/i }));
-    fireEvent.click(screen.getByRole('button', { name: /designing for delight/i }));
-    expect(screen.getByText(/delight works best/i)).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /^open now$/i }));
+    fireEvent.click(screen.getByRole('button', { name: /summer 2027 internships/i }));
+    expect(screen.getByText(/looking for summer 2027 software engineering internships/i)).toBeInTheDocument();
   });
 
   it('keeps the placeholder now-playing widget hidden but music reachable by id', () => {

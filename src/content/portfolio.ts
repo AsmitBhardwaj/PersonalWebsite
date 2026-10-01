@@ -49,16 +49,16 @@ export interface PortfolioContent {
 export const portfolio: PortfolioContent = {
   name: 'Asmit Bhardwaj',
   statusName: 'Asmit',
-  biography: 'I build thoughtful digital products where engineering, interaction, and visual craft meet. This is placeholder copy ready for your story.',
-  currentFocus: 'Creating expressive, reliable interfaces and learning from the details that make products feel alive.',
+  biography: 'I\u2019m a Computer Science student at Gettysburg College (class of 2028), minoring in Mathematics and Economics. I build products, and I treat every internship and project as founder training. I taught myself to code on my first laptop, an old HP, and I haven\u2019t stopped since. At Gettysburg I\u2019m involved with ACM, Sangam, Math Club and Consulting Club.',
+  currentFocus: 'Right now that means Platter, an iOS app I built solo that turns recipe Reels, TikToks and blog posts into clean, cookable recipes, with pantry-aware suggestions and budget meal planning.',
   location: 'Your city · Available worldwide',
   email: 'hello@example.com',
   social: {
-    github: 'https://github.com/',
+    github: 'https://github.com/AsmitBhardwaj',
     linkedin: 'https://www.linkedin.com/',
   },
   technologies: ['TypeScript', 'React', 'Node.js', 'Swift', 'Python', 'Figma'],
-  interests: ['Product craft', 'Creative coding', 'Photography', 'Music'],
+  interests: ['Marathon running', 'FC Barcelona (lifelong)', 'Cricket', 'Football analytics'],
   projects: [
     {
       title: 'Platter',
@@ -82,20 +82,20 @@ export const portfolio: PortfolioContent = {
   ],
   experience: [
     {
-      role: 'Role Title', company: 'Company Name', period: '2024 — Present',
-      highlights: ['Describe the product or system you helped build.', 'Add a concise, truthful outcome or area of ownership.'],
-      technologies: ['TypeScript', 'React', 'Design systems'],
+      role: 'AI Engineering Intern', company: 'Tech Mahindra', period: '',
+      highlights: [
+        'Worked on Yantr.ai, a field service management platform.',
+        'Built a MILP solver benchmarking suite comparing Gurobi, IBM CPLEX, FICO Xpress and Google OR-Tools on the ROADEF 2007 Challenge dataset.',
+        'Turned the results into a solver procurement recommendation (CPLEX), presented with a full deck and literature review.',
+      ],
+      technologies: [],
     },
-    {
-      role: 'Previous Role', company: 'Previous Company', period: '2022 — 2024',
-      highlights: ['Describe a meaningful responsibility.', 'Replace this with a specific contribution.'],
-      technologies: ['JavaScript', 'Node.js', 'Product'],
-    },
+    { role: 'Research Assistant', company: 'Stanford AIMI', period: '', highlights: [], technologies: [] },
+    { role: 'Web Development Intern', company: 'Gettysburg College', period: '', highlights: [], technologies: [] },
   ],
   notes: [
-    { title: 'Designing for delight, carefully', date: 'Sep 18', excerpt: 'A note on motion, restraint, and earning attention.', body: 'Sample note: Delight works best when it clarifies state, rewards curiosity, or makes an interaction easier to understand. Replace this entry with your own writing.' },
-    { title: 'What old hardware gets right', date: 'Aug 04', excerpt: 'Tactility gives software a sense of consequence.', body: 'Sample note: Physical interfaces made state visible. A click, a hinge, or a changing silhouette told you what happened before the screen did.' },
-    { title: 'Small tools, long lives', date: 'Jun 22', excerpt: 'Why focused software can outlast bigger platforms.', body: 'Sample note: The tools we keep often do one job with a point of view. This placeholder can become a short essay or link to longer writing.' },
+    { title: 'Shipping Platter v1.0, building v1.1', date: '', excerpt: 'Nutrition, budget meal planning, and a smarter grocery list.', body: 'Shipping Platter v1.0 to the App Store and building v1.1: nutrition, budget meal planning, and a smarter grocery list.' },
+    { title: 'Summer 2027 internships', date: '', excerpt: 'Looking for software engineering internships.', body: 'Looking for Summer 2027 software engineering internships.' },
   ],
   music: { title: 'Night Transit', artist: 'Placeholder Artist', note: 'Replace title and artist in src/content/portfolio.ts. Audio does not autoplay.' },
   wallpaperPath: '/assets/wallpaper/winter-photo.png',
