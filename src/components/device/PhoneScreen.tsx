@@ -47,7 +47,7 @@ export function PhoneScreen({ ready, booting, navigation }: PhoneScreenProps) {
       <main className={`screen-content ${app ? 'has-app' : ''}`}>
         {!app ? <HomeScreen openApp={openApp} highlightedIndex={navigation?.highlightedIndex ?? null}/> : <AppHost key={app.id} app={app} bus={bus} close={home}/>}
       </main>
-      {app && <nav className="screen-nav" aria-label="Phone navigation"><button onClick={home} aria-label="Back to phone home"><ChevronLeft/><span>Back</span></button><b>{app.id}</b><button onClick={home} aria-label="Phone home"><Home/><span>Home</span></button></nav>}
+      {app && <nav className="screen-nav" aria-label="Phone navigation"><button onClick={home} aria-label="Back to phone home"><ChevronLeft/><span>Back</span></button><b>{app.label}</b><button onClick={home} aria-label="Phone home"><Home/><span>Home</span></button></nav>}
       {navigation && <HardwareTerminal terminal={navigation.terminal} onClose={navigation.closeTerminal}/>}
     </div>
   </div>;

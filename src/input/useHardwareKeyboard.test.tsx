@@ -100,7 +100,7 @@ describe('central input dispatcher', () => {
     expect(setHighlightedIndex).toHaveBeenLastCalledWith(0);
     hook.rerender({ activeApp: null, highlightedIndex: 3 });
     press('ArrowDown');
-    expect(setHighlightedIndex).toHaveBeenLastCalledWith(4);
+    expect(setHighlightedIndex).toHaveBeenLastCalledWith(5);
     act(() => { hook.result.current.activateControl(hardwareControlById.get('dpad-center')!); });
     expect(openApp).toHaveBeenCalledWith('notes');
   });

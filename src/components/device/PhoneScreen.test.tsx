@@ -21,6 +21,6 @@ describe('PhoneScreen', () => {
   it('keeps the placeholder now-playing widget hidden but music reachable by id', () => {
     render(<PhoneScreen ready booting={false}/>);
     expect(screen.queryByText(/placeholder track/i)).not.toBeInTheDocument();
-    expect(screen.getAllByRole('button', { name: /^open /i }).filter((button) => button.classList.contains('app-icon'))).toHaveLength(5);
+    expect(screen.getAllByRole('button', { name: /^open /i }).filter((button) => button.classList.contains('app-icon'))).toHaveLength(6);
   });
 });
