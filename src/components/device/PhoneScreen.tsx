@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { BriefcaseBusiness, ChevronLeft, CircleUserRound, Contact, Github, Home, Linkedin, Music2, NotebookPen, StickyNote, Wifi } from 'lucide-react';
+import { BriefcaseBusiness, ChevronLeft, CircleUserRound, Contact, Github, Home, Linkedin, Mail, NotebookPen, StickyNote, Wifi } from 'lucide-react';
 import { portfolio } from '../../content/portfolio';
 import { PhoneApp, type AppName } from '../apps/PhoneApps';
 import { AppIcon } from '../ui/AppIcon';
@@ -39,6 +39,6 @@ function HomeScreen({ openApp }: { openApp: (app: AppName) => void }) {
     </div>
     <button className="music-widget" onClick={() => openApp('music')} aria-label={`Open music player: ${portfolio.music.title}`}><span className="disc"><i/></span><span><b>{portfolio.music.title}</b><small>{portfolio.music.artist}</small></span><span className="playing-bars" aria-hidden="true"><i/><i/><i/></span></button>
     <span className="page-dots" aria-hidden="true"><i className="active"/><i/></span>
-    <div className="dock" aria-label="Shortcuts"><DockButton label="Open GitHub" icon={Github} onClick={() => window.open(portfolio.social.github, '_blank', 'noopener,noreferrer')}/><DockButton label="Open LinkedIn" icon={Linkedin} onClick={() => window.open(portfolio.social.linkedin, '_blank', 'noopener,noreferrer')}/><DockButton label="Open music" icon={Music2} onClick={() => openApp('music')}/></div>
+    <div className="dock" aria-label="Shortcuts"><DockButton label="Open GitHub" icon={Github} onClick={() => window.open(portfolio.social.github, '_blank', 'noopener,noreferrer')}/><DockButton label="Open LinkedIn" icon={Linkedin} onClick={() => window.open(portfolio.social.linkedin, '_blank', 'noopener,noreferrer')}/><DockButton label="Email Asmit" icon={Mail} onClick={() => { window.location.href = `mailto:${portfolio.email}`; }}/></div>
   </div>;
 }

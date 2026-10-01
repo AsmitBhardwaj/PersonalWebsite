@@ -17,6 +17,7 @@ for (const viewport of viewports) {
     }
     await page.getByRole('button', { name: 'Skip intro' }).click();
     await expect(page.locator('.device-stage')).toHaveAttribute('data-ready', 'true');
+    await page.mouse.move(1, 1);
     await page.screenshot({ path: `test-results/open-${viewport.width}x${viewport.height}.png`, fullPage: true });
     const overflow = await page.evaluate(() => document.documentElement.scrollWidth > document.documentElement.clientWidth);
     expect(overflow).toBe(false);
