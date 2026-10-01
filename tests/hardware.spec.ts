@@ -132,7 +132,22 @@ for (const viewport of [
   });
 }
 
-test('captures key map, pressed feedback, command input, result, and mobile interaction', async ({ page }) => {
+test('touch activation remains visually transparent', async ({ browser }) => {
+  const context = await browser.newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+  const page = await context.newPage();
+  await openPhone(page);
+  const point = await hardwarePoint(page, 'key-c');
+  await page.touchscreen.tap(point.x, point.y);
+  await expect(page.getByTestId('command-buffer')).toHaveText('c');
+  const style = await page.locator('[data-control-id="key-c"]').evaluate((element) => {
+    const computed = getComputedStyle(element);
+    return { background: computed.backgroundColor, border: computed.borderTopWidth, shadow: computed.boxShadow };
+  });
+  expect(style).toEqual({ background: 'rgba(0, 0, 0, 0)', border: '0px', shadow: 'none' });
+  await context.close();
+});
+
+test('captures key map, invisible pointer feedback, command input, result, and mobile interaction', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await openPhone(page, '/?showKeyMap=1');
   await page.mouse.move(720, 700);
@@ -140,12 +155,33 @@ test('captures key map, pressed feedback, command input, result, and mobile inte
 
   await page.goto('/');
   await page.getByRole('button', { name: 'Skip intro' }).click();
-  const point = await hardwarePoint(page, 'key-a');
+  const point = await hardwarePoint(page, 'key-c');
+  const cKey = page.locator('[data-control-id="key-c"]');
   await page.mouse.move(point.x, point.y);
   await page.mouse.down();
-  await expect(page.locator('[data-control-id="key-a"]')).toHaveAttribute('data-pressed', 'true');
+  await expect(cKey).toHaveAttribute('data-pressed', 'true');
+  const pressedStyle = await cKey.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      background: style.backgroundColor,
+      border: style.borderTopWidth,
+      shadow: style.boxShadow,
+      outline: style.outlineStyle,
+    };
+  });
+  expect(pressedStyle).toEqual({ background: 'rgba(0, 0, 0, 0)', border: '0px', shadow: 'none', outline: 'none' });
   await page.screenshot({ path: 'test-results/hardware-key-pressed-1440x900.png' });
   await page.mouse.up();
+  await page.mouse.move(1, 1);
+  await expect(cKey).not.toBeFocused();
+  await page.screenshot({ path: 'test-results/hardware-after-c-1440x900.png' });
+
+  await cKey.focus();
+  await page.keyboard.press('Tab');
+  await page.keyboard.press('Shift+Tab');
+  const keyboardOutline = await cKey.evaluate((element) => getComputedStyle(element).outlineStyle);
+  expect(keyboardOutline).not.toBe('none');
+  await cKey.evaluate((element) => element.blur());
 
   await page.keyboard.press('Escape');
   await page.keyboard.type('projects');
