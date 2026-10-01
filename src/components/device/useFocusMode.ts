@@ -42,7 +42,7 @@ export type Presentation = 'read' | 'play';
 export type OpenMode = 'focus' | 'zoom' | 'none';
 
 /** Fraction of the viewport height the screen fills after a camera zoom, and the widest it may get. */
-export const ZOOM_TARGET_HEIGHT = 0.78;
+export const ZOOM_TARGET_HEIGHT = 0.62;
 export const ZOOM_MAX_WIDTH = 0.92;
 
 /**

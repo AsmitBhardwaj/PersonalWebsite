@@ -5,6 +5,7 @@ import { DeviceBase, GroundShadow } from './DeviceBase';
 import { DisplayAssembly } from './DisplayAssembly';
 import { HardwareControlsOverlay } from './HardwareControlsOverlay';
 import { useFocusMode } from './useFocusMode';
+import { useLandscapePhone } from './useLandscapePhone';
 import { useHardwareKeyboard } from './useHardwareKeyboard';
 
 export type IntroPhase = 'closed' | 'wake' | 'swivel' | 'mid-swivel' | 'enter' | 'open';
@@ -31,6 +32,9 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
     setHighlightedIndex,
   });
 
+  const sideways = useLandscapePhone();
+  // A game on a sideways phone has no room for its field and keyboard, so it waits behind a rotate prompt.
+  const needsRotate = focused && presentation === 'play' && sideways;
   return <div className="device-stage" ref={ref} data-ready={ready} data-phase={phase} data-presentation={presentation}>
     <GroundShadow/>
     <section className="phone" aria-label="Interactive Sidekick-inspired portfolio device">
@@ -40,7 +44,8 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
         booting={booting}
         activeApp={activeApp}
         focused={focused}
-        touchKeys={focused && presentation === 'play' ? {
+        needsRotate={needsRotate}
+        touchKeys={focused && presentation === 'play' && !needsRotate ? {
           dpad: app?.touchDpad ?? true,
           pressedIds: hardware.pressedIds,
           onActivate: hardware.activateControl,

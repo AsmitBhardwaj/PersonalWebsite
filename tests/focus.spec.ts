@@ -151,8 +151,8 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 720
       await expect(stage(page)).toHaveAttribute('data-zoom', 'on');
       await expect(stage(page)).not.toHaveAttribute('data-focus', /.*/);
       const shell = (await page.locator('.screen-shell').boundingBox())!;
-      expect(shell.height / viewport.height).toBeGreaterThan(0.74);
-      expect(shell.height / viewport.height).toBeLessThan(0.82);
+      expect(shell.height / viewport.height).toBeGreaterThan(0.58);
+      expect(shell.height / viewport.height).toBeLessThan(0.66);
       expect(Math.abs(shell.x + shell.width / 2 - viewport.width / 2)).toBeLessThan(3);
       expect(Math.abs(shell.y + shell.height / 2 - viewport.height / 2)).toBeLessThan(3);
       const effective = await page.evaluate(() => {
@@ -181,7 +181,7 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 720
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await openApp(page, 'About');
       await expect(stage(page)).toHaveAttribute('data-zoom', 'on');
-      expect(await wrapperScale(page)).toBeGreaterThan(2);
+      expect(await wrapperScale(page)).toBeGreaterThan(1.5);
       await page.locator('.screen-nav').getByRole('button', { name: 'Phone home', exact: true }).click();
       await expect(stage(page)).not.toHaveAttribute('data-zoom', /.*/);
       await homeVisible(page);
@@ -224,5 +224,99 @@ test.describe('touch keyboard for games on a phone', () => {
       }
     }
     expect(await score()).toBeGreaterThan(0);
+  });
+});
+
+test.describe('sideways phone', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+
+  test('games pause behind a rotate prompt in landscape and resume in portrait', async ({ page }) => {
+    await openApp(page, 'Type');
+    await expect(stage(page)).toHaveAttribute('data-focus', 'on');
+    await page.locator('.touch-key[data-control-id="key-enter"]').tap();
+    const word = page.locator('.type-word:not(.type-pop)').first();
+    await expect(word).toBeVisible();
+    await expect(page.locator('.rotate-prompt')).toHaveCount(0);
+
+    await page.setViewportSize({ width: 844, height: 390 });
+    await expect(page.locator('.rotate-prompt')).toBeVisible();
+    await expect(page.locator('.rotate-prompt')).toContainText('Rotate to portrait to play');
+    await expect(page.locator('.touch-kbd')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Back to phone home' })).toBeInViewport(); // Back stays reachable
+    const top = () => word.evaluate((el) => (el as HTMLElement).style.getPropertyValue('--y'));
+    const frozen = await top();
+    await page.waitForTimeout(600);
+    expect(await top()).toBe(frozen); // the game is paused
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await expect(page.locator('.rotate-prompt')).toHaveCount(0);
+    await expect(page.locator('.touch-kbd')).toBeVisible();
+    await expect.poll(top).not.toBe(frozen); // and picks up again
+  });
+
+  test('reading apps are unaffected when sideways', async ({ page }) => {
+    await page.setViewportSize({ width: 844, height: 390 });
+    await openApp(page, 'Projects');
+    await expect(stage(page)).toHaveAttribute('data-focus', 'on');
+    await expect(page.locator('.rotate-prompt')).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Platter' })).toBeVisible();
+  });
+});
+
+test.describe('key lighting on the device art', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  const light = (page: Page, id: string) => page.locator(`[data-control-id="${id}"] .key-light`);
+  const opacity = (page: Page, id: string) => light(page, id).evaluate((el) => parseFloat(getComputedStyle(el).opacity));
+
+  test('a physical keypress lights the matching key, several keys glow at once, and it fades on release', async ({ page }) => {
+    await page.goto('/');
+    await page.getByRole('button', { name: 'Skip intro' }).click();
+    await expect(stage(page)).toHaveAttribute('data-phase', 'open');
+    expect(await opacity(page, 'key-a')).toBe(0);
+
+    await page.keyboard.down('a');
+    await page.keyboard.down('s');
+    await expect.poll(() => opacity(page, 'key-a')).toBe(1);
+    await expect.poll(() => opacity(page, 'key-s')).toBe(1);
+    const look = await light(page, 'key-a').evaluate((el) => {
+      const css = getComputedStyle(el);
+      const box = el.getBoundingClientRect();
+      const key = el.parentElement!.getBoundingClientRect();
+      return { shadow: css.boxShadow, background: css.backgroundImage, shift: css.transform, insetX: box.left - key.left, width: box.width, keyWidth: key.width };
+    });
+    expect(look.shadow).toContain('rgba(74, 125, 255');
+    expect(look.shadow).toContain('inset');
+    expect(look.background).toContain('radial-gradient');
+    expect(look.shift).not.toBe('none');
+    expect(look.insetX).toBeGreaterThan(0); // slightly inset: reads as the key, not a box on top
+    expect(look.width).toBeLessThan(look.keyWidth);
+    await page.screenshot({ path: 'test-results/key-lit-home-1440x900.png' });
+
+    await page.keyboard.up('a');
+    await page.keyboard.up('s');
+    await expect.poll(() => opacity(page, 'key-a')).toBe(0);
+    await expect.poll(() => opacity(page, 'key-s')).toBe(0);
+  });
+
+  test('d-pad, trackball and back buttons light, in an app and while zoomed', async ({ page }) => {
+    await openApp(page, 'Projects');
+    await expect(stage(page)).toHaveAttribute('data-zoom', 'on');
+    await page.keyboard.down('ArrowDown');
+    await expect.poll(() => opacity(page, 'dpad-down')).toBe(1);
+    await page.screenshot({ path: 'test-results/key-lit-zoom-1440x900.png' });
+    await page.keyboard.up('ArrowDown');
+    await page.locator('[data-control-id="control-trackball"]').dispatchEvent('pointerdown');
+    await expect.poll(() => opacity(page, 'control-trackball')).toBe(1);
+    expect(await light(page, 'control-trackball').evaluate((el) => getComputedStyle(el).borderRadius)).toBe('50%');
+    await page.locator('[data-control-id="control-trackball"]').dispatchEvent('pointerup');
+  });
+
+  test('in-device games light keys while typing', async ({ page }) => {
+    await openApp(page, 'Type');
+    await page.keyboard.down('q');
+    await expect.poll(() => opacity(page, 'key-q')).toBe(1);
+    await page.screenshot({ path: 'test-results/key-lit-game-1440x900.png' });
+    await page.keyboard.up('q');
   });
 });

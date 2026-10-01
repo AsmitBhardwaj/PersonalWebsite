@@ -2,15 +2,15 @@ import { useEffect, useState } from 'react';
 import type { InputBus } from '../input/inputBus';
 import type { AppDefinition } from './types';
 
-interface AppHostProps { app: AppDefinition; bus: InputBus; close: () => void; focused?: boolean; }
+interface AppHostProps { app: AppDefinition; bus: InputBus; close: () => void; focused?: boolean; /** Pause from outside, e.g. behind the rotate prompt. */ paused?: boolean; }
 
 /** Renders one app inside the screen bounds and drives its lifecycle. */
-export function AppHost({ app, bus, close, focused = false }: AppHostProps) {
-  const [paused, setPaused] = useState(() => document.hidden);
+export function AppHost({ app, bus, close, focused = false, paused: pausedByHost = false }: AppHostProps) {
+  const [hidden, setHidden] = useState(() => document.hidden);
   const Component = app.component;
 
   useEffect(() => {
-    const onVisibility = () => setPaused(document.hidden);
+    const onVisibility = () => setHidden(document.hidden);
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
@@ -23,5 +23,5 @@ export function AppHost({ app, bus, close, focused = false }: AppHostProps) {
     };
   }, [app, bus]);
 
-  return <div className="app-host" data-app={app.id}><Component input={bus.input} paused={paused} focused={focused} close={close}/></div>;
+  return <div className="app-host" data-app={app.id}><Component input={bus.input} paused={hidden || pausedByHost} focused={focused} close={close}/></div>;
 }

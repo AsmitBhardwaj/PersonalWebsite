@@ -37,13 +37,19 @@ html.is-focus-mode .depth-hint, html.is-focus-mode .skip-intro { display: none; 
 .device-stage[data-focus] .touch-dock { --dock-max-h: 36vh; display: flex; flex: none; flex-direction: column; align-items: center; gap: 6px; padding: 6px 0; background: #0b0e10; }
 .touch-kbd { position: relative; width: min(100%, calc(var(--dock-max-h) * var(--crop-w) / var(--crop-h))); aspect-ratio: calc(var(--crop-w) / var(--crop-h)); overflow: hidden; border-radius: 8px; }
 .touch-kbd img { position: absolute; max-width: none; pointer-events: none; user-select: none; }
-.touch-key, .touch-arrow { appearance: none; position: absolute; margin: 0; border: 0; padding: 0; color: inherit; background: transparent; border-radius: 18%; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; cursor: pointer; }
-.touch-key::after { content: ""; position: absolute; inset: 0; border-radius: inherit; opacity: 0; background: radial-gradient(ellipse at 50% 40%, rgba(150, 215, 245, .75), rgba(70, 150, 200, .35) 70%, transparent); box-shadow: 0 0 8px rgba(130, 205, 240, .8); transition: opacity .12s; }
-.touch-key.is-pressed::after { opacity: 1; }
+.touch-key, .touch-arrow { appearance: none; position: absolute; margin: 0; border: 0; padding: 0; color: inherit; background: transparent; border-radius: 18%; touch-action: manipulation; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; cursor: pointer; overflow: visible; }
 .touch-arrows { display: flex; gap: 8px; width: min(100%, 420px); padding: 0 8px; }
 .touch-arrow { position: relative; display: grid; flex: 1; height: 38px; place-items: center; border: 1px solid #3c484e; border-radius: 8px; color: #cfe3ec; background: linear-gradient(#2c363b, #161d21); }
 .touch-arrow svg { width: 20px; height: 20px; }
-.touch-arrow.is-pressed { color: #04141c; background: linear-gradient(#a6dcf4, #5aa8cc); box-shadow: 0 0 8px rgba(130, 205, 240, .8); }
+.touch-arrow.is-pressed { color: #dbe8ff; background: linear-gradient(#162448, #24407f); box-shadow: inset 0 2px 3px rgba(0, 0, 0, .6), 0 0 8px rgba(74, 125, 255, .5); transform: translateY(1px); }
 
 /* Camera zoom (desktop, reading apps): the wrapper scales around the screen centre. Re-raster text at the zoomed size. */
 .device-stage[data-zoom] .display-assembly { will-change: auto; }
+
+/* Sideways phone: games wait behind a rotate prompt (the game is paused by AppHost). */
+.rotate-prompt { position: absolute; inset: 0 0 var(--nav-h, 14%); z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .35em; padding: 0 8%; text-align: center; color: #e9f4f8; background: radial-gradient(ellipse at 50% 35%, #1c3a4a, #0a141a 75%); }
+.rotate-prompt h2 { margin: 0; font-family: Georgia, serif; font-size: 1.3em; }
+.rotate-prompt p { margin: 0; color: #9fc3d1; font-size: .85em; }
+.rotate-prompt__icon { width: 2.4em; height: 2.4em; margin-bottom: .2em; color: #8fb8ff; animation: rotate-hint 2.4s ease-in-out infinite; }
+@keyframes rotate-hint { 0%, 25% { transform: rotate(90deg); } 60%, 100% { transform: rotate(0); } }
+@media (prefers-reduced-motion: reduce) { .rotate-prompt__icon { animation: none; } }

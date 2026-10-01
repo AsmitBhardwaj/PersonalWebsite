@@ -12,6 +12,7 @@ interface DisplayAssemblyProps {
   booting: boolean;
   activeApp: AppId | null;
   focused: boolean;
+  needsRotate: boolean;
   /** On-screen keys for games in focus mode. Null when the app does not need them. */
   touchKeys: TouchKeyboardProps | null;
   shellRef: RefObject<HTMLDivElement | null>;
@@ -23,7 +24,7 @@ interface DisplayAssemblyProps {
   closeTerminal: () => void;
 }
 
-export function DisplayAssembly({ ready, booting, activeApp, focused, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal }: DisplayAssemblyProps) {
+export function DisplayAssembly({ ready, booting, activeApp, focused, needsRotate, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal }: DisplayAssemblyProps) {
   return <>
     <div className="contact-shadow" aria-hidden="true"/>
     <div className="motion-ghost" aria-hidden="true">
@@ -37,7 +38,7 @@ export function DisplayAssembly({ ready, booting, activeApp, focused, touchKeys,
       </div>
       <div className="display-front-face">
         <div className="screen-shell" ref={shellRef}>
-          <PhoneScreen ready={ready} booting={booting} navigation={{ activeApp, focused, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal }}/>
+          <PhoneScreen ready={ready} booting={booting} navigation={{ activeApp, focused, needsRotate, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal }}/>
           {touchKeys && <TouchKeyboard {...touchKeys}/>}
           <div className="glass-reflection" aria-hidden="true"/>
         </div>

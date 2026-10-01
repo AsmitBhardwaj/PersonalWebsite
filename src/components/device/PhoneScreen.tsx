@@ -7,6 +7,7 @@ import type { AppId } from '../../apps/types';
 import { createInputBus, type InputBus } from '../../input/inputBus';
 import { AppIcon } from '../ui/AppIcon';
 import { DockButton } from '../ui/DockButton';
+import { RotatePrompt } from './RotatePrompt';
 import { HardwareTerminal } from './HardwareTerminal';
 import type { HardwareTerminalState } from './useHardwareKeyboard';
 
@@ -22,6 +23,7 @@ interface PhoneScreenNavigation {
   goHome: () => void;
   closeTerminal: () => void;
   focused?: boolean;
+  needsRotate?: boolean;
 }
 
 interface PhoneScreenProps { ready: boolean; booting: boolean; navigation?: PhoneScreenNavigation; }
@@ -46,7 +48,8 @@ export function PhoneScreen({ ready, booting, navigation }: PhoneScreenProps) {
     <div className={`phone-os ${ready ? 'is-ready' : ''}`} style={{ backgroundImage: `url(${portfolio.wallpaperPath})` }}>
       <header className="status-bar"><span><i className="signal-bars"/>{portfolio.statusName}</span><span><Wifi size={11}/><time>10:21</time><i className="battery"/></span></header>
       <main className={`screen-content ${app ? 'has-app' : ''}`}>
-        {!app ? <HomeScreen openApp={openApp} highlightedIndex={navigation?.highlightedIndex ?? null}/> : <AppHost key={app.id} app={app} bus={bus} close={home} focused={navigation?.focused ?? false}/>}
+        {!app ? <HomeScreen openApp={openApp} highlightedIndex={navigation?.highlightedIndex ?? null}/> : <AppHost key={app.id} app={app} bus={bus} close={home} focused={navigation?.focused ?? false} paused={navigation?.needsRotate ?? false}/>}
+        {app && navigation?.needsRotate && <RotatePrompt appLabel={app.label}/>}
       </main>
       {app && <nav className="screen-nav" aria-label="Phone navigation"><button onClick={home} aria-label="Back to phone home"><ChevronLeft/><span>Back</span></button><b>{app.label}</b><button onClick={home} aria-label="Phone home"><Home/><span>Home</span></button></nav>}
       {navigation && <HardwareTerminal terminal={navigation.terminal} onClose={navigation.closeTerminal}/>}

@@ -16,7 +16,7 @@ export function TypeApp({ input, paused }: AppProps) {
   const best = useRef(highScore);
 
   useAppInput(input, (event) => {
-    if (event.type !== 'keydown') return;
+    if (event.type !== 'keydown' || paused) return;
     const state = game.current;
     if (state.status !== 'playing') {
       if (event.key === 'Enter' && !event.repeat) { game.current = createGame(); setNewHigh(false); render(); }

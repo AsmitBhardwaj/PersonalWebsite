@@ -106,7 +106,7 @@ export function HardwareControlsOverlay({ enabled, debug, pressedIds, onActivate
         onPointerCancel={() => onRelease(control)}
         onPointerLeave={() => onRelease(control)}
         onClick={(event) => activate(event, control)}
-      ><span>{control.id}</span></button>;
+      ><i className="key-light" aria-hidden="true"/><span>{control.id}</span></button>;
     })}
     {debug && <output className="hardware-pointer-coordinate">x {pointer.x} · y {pointer.y}</output>}
   </div>;

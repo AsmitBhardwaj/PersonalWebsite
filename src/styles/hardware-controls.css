@@ -23,7 +23,7 @@
   border: 0;
   border-radius: 18%;
   padding: 0;
-  overflow: hidden;
+  overflow: visible;
   color: transparent;
   background: transparent;
   box-shadow: none;
@@ -99,3 +99,29 @@
 @media (prefers-reduced-motion: reduce) {
   .hardware-control { transition: none; }
 }
+
+/* Key lighting: the device's own keys depress and glow blue while down. It lives on a child layer so the
+   hit target itself stays visually transparent. Instant on press, ~120ms fade on release. */
+.key-light {
+  position: absolute;
+  inset: 5% 4%;
+  border-radius: 24% / 30%;
+  opacity: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 42%, rgba(74, 125, 255, .42), rgba(74, 125, 255, .16) 62%, transparent 100%),
+    rgba(0, 0, 0, .2);
+  box-shadow:
+    inset 0 .22cqw .3cqw rgba(0, 0, 0, .6),
+    0 0 .9cqw .25cqw rgba(74, 125, 255, .38);
+  transform: translateY(0);
+  transition: opacity .12s ease-out, transform .12s ease-out;
+}
+.hardware-control--circle .key-light { border-radius: 50%; }
+.is-pressed > .key-light {
+  opacity: 1;
+  transform: translateY(1px);
+  transition: none;
+}
+.hardware-controls-overlay.is-debugging .key-light { display: none; }
+@media (prefers-reduced-motion: reduce) { .key-light { transition: none; } }

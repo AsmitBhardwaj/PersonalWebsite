@@ -57,7 +57,7 @@ export function TouchKeyboard({ dpad, pressedIds, onActivate, onPress, onRelease
           height: `${control.height / KEYBOARD_CROP.height * 100}%`,
         }}
         {...handlers(control)}
-      />)}
+      ><i className="key-light" aria-hidden="true"/></button>)}
     </div>
   </div>;
 }

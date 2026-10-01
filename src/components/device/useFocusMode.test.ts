@@ -29,9 +29,9 @@ describe('focus mode sizing', () => {
     expect(openModeFor('play', 269)).toBe('none');
   });
 
-  it('zooms the screen to ~78% of the viewport height, capped by width', () => {
-    expect(zoomFor({ width: 349, height: 269 }, { width: 1440, height: 900 })).toBeCloseTo(2.61, 1);
-    expect(zoomFor({ width: 294, height: 226 }, { width: 1280, height: 720 })).toBeCloseTo(2.48, 1);
+  it('zooms the screen to ~62% of the viewport height, capped by width', () => {
+    expect(zoomFor({ width: 349, height: 269 }, { width: 1440, height: 900 })).toBeCloseTo(2.07, 1);
+    expect(zoomFor({ width: 294, height: 226 }, { width: 1280, height: 720 })).toBeCloseTo(1.98, 1);
     expect(zoomFor({ width: 600, height: 200 }, { width: 800, height: 900 })).toBeCloseTo(1.23, 1); // width-limited
     expect(zoomFor({ width: 600, height: 700 }, { width: 800, height: 600 })).toBe(1); // never zooms out
   });
