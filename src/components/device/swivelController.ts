@@ -61,8 +61,6 @@ interface DragState {
 export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelController {
   const find = (selector: string) => stage.querySelector<HTMLElement>(selector);
   const display = find('.display-assembly');
-  const back = find('.display-back');
-  const front = find('.display-front-face');
   const phone = find('.phone');
   const ghost = find('.motion-ghost');
   const contact = find('.contact-shadow');
@@ -73,7 +71,7 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   const viewport = find('.screen-viewport');
   const os = find('.phone-os');
   const overlay = find('.hardware-controls-overlay');
-  if (!display || !back || !front || !phone || !ghost || !contact || !shadow || !shadowTight || !shadowSoft || !glare || !viewport || !os) {
+  if (!display || !phone || !ghost || !contact || !shadow || !shadowTight || !shadowSoft || !glare || !viewport || !os) {
     throw new Error('Swivel: device markup is missing a layer');
   }
 
@@ -100,8 +98,6 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
     shadowTight!.style.opacity = String(pose.shadowTight.opacity);
     shadowSoft!.style.transform = layerTransform(pose.shadowSoft);
     shadowSoft!.style.opacity = String(pose.shadowSoft.opacity);
-    back!.style.opacity = String(pose.backOpacity);
-    front!.style.opacity = String(pose.frontOpacity);
     ghost!.style.opacity = String(ghostOn ? pose.ghostOpacity : 0);
     contact!.style.transform = `translate3d(0, ${pose.contact.y}px, 0) scaleX(${pose.contact.scaleX})`;
     contact!.style.opacity = String(pose.contact.opacity);

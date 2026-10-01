@@ -13,6 +13,8 @@ interface DisplayAssemblyProps {
   activeApp: AppId | null;
   focused: boolean;
   needsRotate: boolean;
+  /** The screen is mid enter/exit animation, so apps hold still. */
+  transitioning: boolean;
   /** On-screen keys for games in focus mode. Null when the app does not need them. */
   touchKeys: TouchKeyboardProps | null;
   shellRef: RefObject<HTMLDivElement | null>;
@@ -31,7 +33,7 @@ interface DisplayAssemblyProps {
   onBootCard: () => void;
 }
 
-export function DisplayAssembly({ ready, activeApp, focused, needsRotate, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, lidOpenable, onOpenRequest, boot, bootReducedMotion, onBootStart, onBootCard }: DisplayAssemblyProps) {
+export function DisplayAssembly({ ready, activeApp, focused, needsRotate, transitioning, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, lidOpenable, onOpenRequest, boot, bootReducedMotion, onBootStart, onBootCard }: DisplayAssemblyProps) {
   return <>
     <div className="contact-shadow" aria-hidden="true"/>
     <div className="motion-ghost" aria-hidden="true">
@@ -44,15 +46,10 @@ export function DisplayAssembly({ ready, activeApp, focused, needsRotate, touchK
       </div>
     </div>
     <div className="display-assembly">
-      <div className="display-back" aria-hidden="true">
-        <img src={`${GENERATED_ROOT}/display-back-closed.png`} alt="" draggable={false}/>
-        <span className="back-wake-glow"/>
-        <span className="notification-led"/>
-      </div>
       <div className="display-front-face">
         <span className="lid-grip" aria-hidden="true"/>
         <div className="screen-shell" ref={shellRef}>
-          <PhoneScreen ready={ready} navigation={{ activeApp, focused, needsRotate, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, boot, bootReducedMotion, onBootStart, onBootCard }}/>
+          <PhoneScreen ready={ready} navigation={{ activeApp, focused, needsRotate, transitioning, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, boot, bootReducedMotion, onBootStart, onBootCard }}/>
           {touchKeys && <TouchKeyboard {...touchKeys}/>}
           <div className="glass-reflection" aria-hidden="true"/>
           <div className="glass-glare" aria-hidden="true"><i/></div>

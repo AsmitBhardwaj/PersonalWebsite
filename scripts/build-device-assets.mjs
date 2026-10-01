@@ -17,8 +17,6 @@ const OPEN = {
   pivot: { x: 393, y: 296 },
 };
 
-const STORYBOARD_BACK = { left: 100, top: 320, width: 315, height: 212 };
-
 const clamp = (value, minimum, maximum) => Math.min(maximum, Math.max(minimum, value));
 
 async function removeNearWhite(inputPath) {
@@ -114,29 +112,13 @@ async function buildDisplayFront(openSource) {
     .toFile(path.join(outputDir, 'display-front-frame.png'));
 }
 
-async function buildDisplayBack(storyboardSource) {
-  const keyed = await (await removeNearWhite(storyboardSource))
-    .extract(STORYBOARD_BACK)
-    .resize(OPEN.display.width, OPEN.display.height, { fit: 'fill' })
-    .png()
-    .toBuffer();
-  const coverMask = `<rect x="11" y="18" width="764" height="481" rx="64" fill="white"/>`;
-
-  await sharp(keyed)
-    .composite([{ input: svgMask(OPEN.display.width, OPEN.display.height, coverMask), blend: 'dest-in' }])
-    .png({ compressionLevel: 9, adaptiveFiltering: true })
-    .toFile(path.join(outputDir, 'display-back-closed.png'));
-}
-
 async function main() {
   await mkdir(outputDir, { recursive: true });
   const openSource = path.join(sourceDir, 'sidekickI.png');
-  const storyboardSource = path.join(sourceDir, 'sidekick-storyboard.png');
 
   await Promise.all([
     buildOpenBase(openSource),
     buildDisplayFront(openSource),
-    buildDisplayBack(storyboardSource),
   ]);
 
   await writeFile(path.join(outputDir, 'device-metrics.json'), `${JSON.stringify({
@@ -150,7 +132,6 @@ async function main() {
       height: OPEN.lcd.height,
     },
     pivotInDisplay: OPEN.pivot,
-    storyboardBackCrop: STORYBOARD_BACK,
   }, null, 2)}\n`);
 }
 

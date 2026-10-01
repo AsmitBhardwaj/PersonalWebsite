@@ -1,8 +1,11 @@
 // ---- Tuning ---------------------------------------------------------------
-/** Preferred cell size in CSS px; shrinks on a tiny play field so MIN_COLS still fit. */
-export const CELL_TARGET = 16;
-export const MIN_COLS = 12;
-export const MIN_ROWS = 8;
+/**
+ * The board is a fixed logical grid. A resize or focus-mode change only rescales the cells to the play field and letterboxes the
+ * leftover space; it never changes the grid, so it can never end or reset a run. 20x14 sits between the in-device field (about
+ * 1.8:1) and a phone's focus-mode field (about 0.75:1 to 1.4:1).
+ */
+export const GRID_COLS = 20;
+export const GRID_ROWS = 14;
 export const START_LENGTH = 3;
 /** Seconds per move at the start, shrinking by SPEED_STEP every FOOD_PER_SPEEDUP food down to MIN_TICK_SECONDS. */
 export const START_TICK_SECONDS = 0.16;
@@ -45,11 +48,9 @@ export const KEY_DIRECTIONS: Record<string, Direction> = { ArrowUp: 'up', ArrowD
 
 const same = (a: Point, b: Point) => a.x === b.x && a.y === b.y;
 
-/** Whole cells that fit a play field: cell size in px, then columns and rows. */
-export function gridFor(width: number, height: number): { cell: number; cols: number; rows: number } {
-  const fit = Math.floor(Math.min(width / MIN_COLS, height / MIN_ROWS));
-  const cell = Math.max(4, Math.min(CELL_TARGET, fit));
-  return { cell, cols: Math.max(MIN_COLS, Math.floor(width / cell)), rows: Math.max(MIN_ROWS, Math.floor(height / cell)) };
+/** Whole device pixels per cell so the fixed grid fits inside a play field of `width` x `height` CSS px, with any leftover space letterboxed. */
+export function cellSizeFor(width: number, height: number, dpr = 1): number {
+  return Math.max(1, Math.floor(Math.min(width / GRID_COLS, height / GRID_ROWS) * dpr));
 }
 
 export const tickSecondsFor = (eaten: number) => Math.max(MIN_TICK_SECONDS, START_TICK_SECONDS - Math.floor(eaten / FOOD_PER_SPEEDUP) * SPEED_STEP);
@@ -60,7 +61,7 @@ export function placeFood(cols: number, rows: number, snake: Point[], rng: () =>
   return free.length ? free[Math.floor(rng() * free.length)] : null;
 }
 
-export function createGame(cols: number, rows: number, status: GameStatus = 'playing', rng: () => number = Math.random): GameState {
+export function createGame(status: GameStatus = 'playing', rng: () => number = Math.random, cols = GRID_COLS, rows = GRID_ROWS): GameState {
   const y = Math.floor(rows / 2);
   const headX = Math.floor(cols / 2);
   const snake = Array.from({ length: START_LENGTH }, (_, i) => ({ x: headX - i, y }));

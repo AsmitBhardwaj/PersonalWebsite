@@ -47,17 +47,12 @@
 
 .display-assembly { z-index: 6; will-change: transform; }
 
-.display-back,
 .display-front-face {
   position: absolute;
   inset: 0;
   transform-origin: 50% 50%;
-  will-change: opacity;
 }
 
-.display-back { z-index: 2; }
-
-.display-back > img,
 .display-front-frame,
 .motion-ghost img {
   display: block;
@@ -93,34 +88,6 @@
   pointer-events: none;
   background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .09), transparent);
   mix-blend-mode: screen;
-}
-
-.back-wake-glow {
-  position: absolute;
-  z-index: 3;
-  top: 43%;
-  left: 50%;
-  width: 32%;
-  height: 18%;
-  transform: translate(-50%, -50%);
-  border-radius: 50%;
-  opacity: 0;
-  background: radial-gradient(ellipse, rgba(161, 206, 226, .18), transparent 70%);
-  filter: blur(5px);
-  pointer-events: none;
-}
-
-.notification-led {
-  position: absolute;
-  z-index: 4;
-  right: 49.1%;
-  bottom: 7.4%;
-  width: 1.8%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  opacity: .08;
-  background: #b8e4f5;
-  pointer-events: none;
 }
 
 .contact-shadow {
@@ -222,7 +189,5 @@
 .device-stage:is([data-phase='closed'], [data-phase='wake'], [data-swiveling]) :is(.phone, .hardware-controls-overlay, .swivel-shadow, .swivel-shadow__layer, .glass-glare i, .contact-shadow, .motion-ghost) { will-change: transform, opacity; }
 
 @media (prefers-reduced-motion: reduce) {
-  .display-assembly,
-  .display-back,
-  .display-front-face { will-change: auto; }
+  .display-assembly { will-change: auto; }
 }

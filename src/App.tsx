@@ -64,8 +64,7 @@ export default function App() {
     const stage = stageRef.current;
     if (!stage) return;
     timelineRef.current?.kill();
-    gsap.set(stage.querySelector('.back-wake-glow'), { opacity: 0 });
-    gsap.set(stage.querySelector('.notification-led'), { opacity: 0.62, boxShadow: '0 0 5px #8fc8ee' });
+    gsap.set(stage.querySelector('.lock-screen'), { clearProps: 'opacity' });
     gsap.set(stage.querySelector('.ambient-shadow'), { opacity: 0.78, scaleX: 1.04 });
     setReady(true); setIntroActive(false);
     allowBootRef.current = withBoot;
@@ -102,20 +101,18 @@ export default function App() {
       return () => { swivel.destroy(); swivelRef.current = null; };
     }
     const glass = stage.querySelector('.glass-reflection');
-    const led = stage.querySelector('.notification-led');
+    const lock = stage.querySelector('.lock-screen');
     const ambient = stage.querySelector('.ambient-shadow');
-    const wakeGlow = stage.querySelector('.back-wake-glow');
     const os = stage.querySelector('.phone-os');
-    // The wake-up: the lid is shut and the LED and glow come on. Then it waits for a visitor.
+    // The wake-up: the lid is shut and the dim lock screen lights up under the glass. Then it waits for a visitor.
     const timeline = gsap.timeline({ defaults: { overwrite: 'auto' } });
     timelineRef.current = timeline;
     timeline
       .set(os, { opacity: 0, filter: 'blur(2px)' })
-      .set(wakeGlow, { opacity: 0 })
-      .to(led, { opacity: 1, boxShadow: '0 0 9px #8fc8ee', duration: 0.35, ease: 'sine.inOut' }, 0.15)
+      .set(lock, { opacity: 0 })
+      .to(lock, { opacity: 1, duration: 0.5, ease: 'sine.inOut' }, 0.15)
       .to(glass, { xPercent: 120, duration: 0.48, ease: 'sine.inOut' }, 0.08)
       .call(() => setIntroPhase('wake'), [], 0.76)
-      .to(wakeGlow, { opacity: 1, duration: 0.3, ease: 'sine.out' }, 0.63)
       .to(ambient, { opacity: 0.78, scaleX: 1.04, duration: 0.5 }, 0.6);
     return () => { timeline.kill(); swivel.destroy(); swivelRef.current = null; };
   }, { scope: stageRef });

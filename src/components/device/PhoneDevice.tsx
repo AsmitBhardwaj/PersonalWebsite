@@ -33,7 +33,7 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
   const shellRef = useRef<HTMLDivElement>(null);
   const app = activeApp ? appById.get(activeApp) : undefined;
   const presentation = app?.presentation ?? 'read';
-  const { focused, requestHome: goHome } = useFocusMode({ shellRef, enabled: hardwareEnabled, activeApp, presentation, closeApp: () => setActiveApp(null) });
+  const { focused, transitioning, requestHome: goHome } = useFocusMode({ shellRef, enabled: hardwareEnabled, activeApp, presentation, closeApp: () => setActiveApp(null) });
   const hardware = useHardwareKeyboard({
     enabled: hardwareEnabled,
     activeApp,
@@ -58,6 +58,7 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
         activeApp={activeApp}
         focused={focused}
         needsRotate={needsRotate}
+        transitioning={transitioning}
         touchKeys={focused && presentation === 'play' && !needsRotate ? {
           dpad: app?.touchDpad ?? true,
           pressedIds: hardware.pressedIds,

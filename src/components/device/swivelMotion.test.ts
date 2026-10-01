@@ -62,9 +62,9 @@ describe('swing velocity profile', () => {
 describe('pose', () => {
   it('matches the original rest poses exactly', () => {
     const closed = poseAt(0);
-    expect(closed).toMatchObject({ rotation: 0, yPercent: 64, scale: 1, lift: 0, backOpacity: 1, frontOpacity: 0, ghostOpacity: 0 });
+    expect(closed).toMatchObject({ rotation: 0, yPercent: 64, scale: 1, lift: 0, ghostOpacity: 0 });
     const open = poseAt(180);
-    expect(open).toMatchObject({ rotation: 180, yPercent: -16, scale: 1, lift: 0, backOpacity: 0, frontOpacity: 1, ghostOpacity: 0 });
+    expect(open).toMatchObject({ rotation: 180, yPercent: -16, scale: 1, lift: 0, ghostOpacity: 0 });
   });
 
   it('lifts to the configured scale mid-swing and is flat at rest, overshoot included', () => {
@@ -85,11 +85,10 @@ describe('pose', () => {
     expect(poseAt(183).shadowTight).toEqual(rest.shadowTight);
   });
 
-  it('keeps the lid opaque through the face swap', () => {
-    for (let angle = 0; angle <= 183; angle += 1) {
-      const { backOpacity, frontOpacity } = poseAt(angle);
-      expect(Math.max(backOpacity, frontOpacity)).toBe(1);
-    }
+  it('is one face-up layer at every angle: no per-face opacity, and the lid art is half a turn from its open orientation when closed', () => {
+    for (let angle = 0; angle <= 183; angle += 1) expect(Object.keys(poseAt(angle))).not.toEqual(expect.arrayContaining(['backOpacity']));
+    expect(glassWorldRotation(0)).toBe(-180);
+    expect(glassWorldRotation(180)).toBe(0);
   });
 
   it('overshoots the open pose by the same slope the swing travels', () => {

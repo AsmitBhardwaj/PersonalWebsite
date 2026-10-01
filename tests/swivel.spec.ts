@@ -270,6 +270,87 @@ test.describe('opening the device', () => {
   });
 });
 
+test.describe('closed state', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test('the lid is one face-up layer: no back art, no face opacity, content readable upright', async ({ page }) => {
+    await waitForWake(page);
+    await expect(page.locator('.display-back, .back-wake-glow, .notification-led')).toHaveCount(0);
+    const closed = await page.evaluate(() => {
+      const turn = (el: Element) => { const m = new DOMMatrix(getComputedStyle(el).transform); return Math.round(Math.atan2(m.b, m.a) * 180 / Math.PI); };
+      const q = (selector: string) => document.querySelector<HTMLElement>(selector)!;
+      return { lid: turn(q('.display-assembly')), face: turn(q('.display-front-face')), lock: turn(q('.lock-screen')), faceOpacity: q('.display-front-face').style.opacity, lockText: q('.lock-screen').textContent ?? '' };
+    });
+    // The lid art is the open art turned half a turn; the lock content is turned back, so the content reads upright.
+    expect(Math.abs(closed.face)).toBe(180);
+    expect(closed.lid).toBe(0);
+    expect(Math.abs(closed.face + closed.lock) % 360).toBe(0);
+    expect(closed.faceOpacity).toBe('');
+    expect(closed.lockText).toMatch(/Asmit/i);
+    expect(closed.lockText).toMatch(/\d{1,2}[:.]\d{2}/);
+    await expect(page.locator('.glass-glare')).toHaveCount(1);
+    await expect(page.locator('.open-prompt')).toBeVisible();
+  });
+
+  test('the lid sits flush over the keyboard area with the side controls still visible', async ({ page }) => {
+    await waitForWake(page);
+    const { lidBox, stageBox } = await page.evaluate(() => {
+      const r = (selector: string) => { const b = document.querySelector(selector)!.getBoundingClientRect(); return { x: b.x, y: b.y, w: b.width, h: b.height }; };
+      return { lidBox: r('.display-assembly'), stageBox: r('.device-stage') };
+    });
+    // Centred across the body, with the side pods (outer ~25% each side) uncovered, and inside the body's height.
+    expect(lidBox.x + lidBox.w / 2).toBeCloseTo(stageBox.x + stageBox.w / 2, 0);
+    expect(lidBox.x).toBeGreaterThanOrEqual(stageBox.x + stageBox.w * 0.25 - 1);
+    expect(lidBox.x + lidBox.w).toBeLessThanOrEqual(stageBox.x + stageBox.w * 0.75 + 1);
+    expect(lidBox.y + lidBox.h).toBeLessThanOrEqual(stageBox.y + stageBox.h + 1);
+  });
+
+  test('the same face stays in place through the swivel and the lock content is not swapped until the redraw dim', async ({ page }) => {
+    await waitForWake(page);
+    await page.evaluate(() => {
+      const q = (selector: string) => document.querySelector<HTMLElement>(selector)!;
+      const w = window as unknown as { __seen: { face: string; lockOn: string; lockTurn: number; lid: number; viewport: number }[] };
+      w.__seen = [];
+      const tick = () => {
+        const m = new DOMMatrix(getComputedStyle(q('.lock-screen')).transform);
+        const lid = Number(/rotate\((-?[\d.]+(?:e-?\d+)?)deg\)/.exec(q('.display-assembly').style.transform)?.[1] ?? NaN);
+        w.__seen.push({ face: q('.display-front-face').style.opacity, lockOn: q('.lock-screen').dataset.on ?? '', lockTurn: Math.atan2(m.b, m.a) * 180 / Math.PI, lid, viewport: Number(getComputedStyle(q('.screen-viewport')).opacity) });
+        if (q('.device-stage').getAttribute('data-phase') !== 'open') requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    });
+    await page.keyboard.press('Enter');
+    await expect(stage(page)).toHaveAttribute('data-phase', 'open');
+    const seen = await page.evaluate(() => (window as unknown as { __seen: { face: string; lockOn: string; lockTurn: number; lid: number; viewport: number }[] }).__seen);
+    // No crossfade between faces at any point.
+    expect(seen.every((s) => s.face === '')).toBe(true);
+    // While the lid turns the lock content is still the lid's own (counter-rotated 180 inside it), until the dim swaps it out.
+    const swinging = seen.filter((s) => s.lid > 1 && s.lid < 150 && s.viewport === 1);
+    expect(swinging.length).toBeGreaterThan(5);
+    expect(swinging.every((s) => s.lockOn === 'true' && Math.abs(Math.abs(s.lockTurn) - 180) < 0.01)).toBe(true);
+    // The swap to home happens inside the dim, never in view.
+    expect(seen.some((s) => s.viewport < 0.1)).toBe(true);
+    const firstOff = seen.findIndex((s) => s.lockOn === 'false');
+    expect(firstOff).toBeGreaterThan(0);
+    // The frame the lock content leaves is inside the dim, not at full brightness.
+    expect(seen[firstOff].viewport).toBeLessThan(0.5);
+    await expect(page.locator('.lock-screen')).toHaveAttribute('data-on', 'false');
+    await expect(page.locator('.lock-screen')).toBeHidden();
+  });
+
+  test('closing again returns to the same single-face lock screen', async ({ page }) => {
+    await waitForWake(page);
+    await page.keyboard.press('Enter');
+    await expect(stage(page)).toHaveAttribute('data-phase', 'open');
+    await page.waitForTimeout(300);
+    await dragTo(page, 180, 120, true, BEZEL);
+    await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
+    expect(await angleOf(page)).toBe(0);
+    await expect(page.locator('.lock-screen')).toBeVisible();
+    await expect(page.locator('.display-back')).toHaveCount(0);
+  });
+});
+
 test.describe('sound', () => {
   // These count and silence real plays, so the run-wide mute (tests/fixtures.ts) is off here.
   test.use({ viewport: { width: 1440, height: 900 }, muted: false });

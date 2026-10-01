@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  FOOD_PER_SPEEDUP, MAX_QUEUED_TURNS, MIN_COLS, MIN_ROWS, MIN_TICK_SECONDS, POINTS_PER_FOOD, START_LENGTH, START_TICK_SECONDS, SWIPE_THRESHOLD,
-  advance, createGame, gridFor, placeFood, queueTurn, stepSnake, swipeToDirection, tickSecondsFor,
+  FOOD_PER_SPEEDUP, MAX_QUEUED_TURNS, GRID_COLS, GRID_ROWS, MIN_TICK_SECONDS, POINTS_PER_FOOD, START_LENGTH, START_TICK_SECONDS, SWIPE_THRESHOLD,
+  advance, cellSizeFor, createGame, placeFood, queueTurn, stepSnake, swipeToDirection, tickSecondsFor,
 } from './snakeGame';
 import type { GameState, Point } from './snakeGame';
 
 const rng = () => 0;
-const gameWith = (extra: Partial<GameState> = {}): GameState => ({ ...createGame(10, 10, 'playing', rng), food: { x: 0, y: 0 }, ...extra });
+const gameWith = (extra: Partial<GameState> = {}): GameState => ({ ...createGame('playing', rng, 10, 10), food: { x: 0, y: 0 }, ...extra });
 const row = (y: number, ...xs: number[]): Point[] => xs.map((x) => ({ x, y }));
 
 describe('movement', () => {
@@ -52,7 +52,7 @@ describe('reverse block and turn buffer', () => {
     expect([state.dir, state.queue]).toEqual(['left', []]);
   });
   it('takes no turns before the game is playing', () => {
-    const state = createGame(10, 10, 'start', rng);
+    const state = createGame('start', rng, 10, 10);
     expect(queueTurn(state, 'up')).toBe(state);
   });
 });
@@ -113,19 +113,32 @@ describe('fixed timestep', () => {
   });
 });
 
-describe('grid sizing', () => {
-  it('uses whole cells that never overflow the field', () => {
-    for (const [w, h] of [[300, 200], [390, 520], [211, 137], [100, 60]]) {
-      const { cell, cols, rows } = gridFor(w, h);
-      expect(Number.isInteger(cell)).toBe(true);
-      expect(cols * cell).toBeLessThanOrEqual(w);
-      expect(rows * cell).toBeLessThanOrEqual(h);
-      expect(cols).toBeGreaterThanOrEqual(MIN_COLS);
-      expect(rows).toBeGreaterThanOrEqual(MIN_ROWS);
-    }
+describe('fixed grid and rescaling', () => {
+  it('always plays on the same 20x14 grid, whatever size the field is', () => {
+    const state = createGame('start', rng);
+    expect([state.cols, state.rows]).toEqual([GRID_COLS, GRID_ROWS]);
+    expect([GRID_COLS, GRID_ROWS]).toEqual([20, 14]);
   });
-  it('gives a bigger field more cells', () => {
-    expect(gridFor(390, 520).rows).toBeGreaterThan(gridFor(300, 200).rows);
+  it('picks whole device pixels per cell that never overflow the field, letterboxing the rest', () => {
+    for (const [w, h, dpr] of [[349, 194, 1], [374, 503, 3], [286, 159, 2], [100, 60, 1], [752, 541, 1.5]]) {
+      const cell = cellSizeFor(w, h, dpr);
+      expect(Number.isInteger(cell)).toBe(true);
+      expect(GRID_COLS * cell).toBeLessThanOrEqual(w * dpr);
+      expect(GRID_ROWS * cell).toBeLessThanOrEqual(h * dpr);
+    }
+    // The tighter axis decides: a wide field is limited by height, a tall one by width.
+    expect(cellSizeFor(2000, 140)).toBe(10);
+    expect(cellSizeFor(200, 2000)).toBe(10);
+  });
+  it('rescales without touching a run in progress', () => {
+    const run = stepSnake(stepSnake(createGame('playing', rng), rng), rng);
+    const before = JSON.stringify(run);
+    cellSizeFor(300, 200); cellSizeFor(390, 600, 3);
+    expect(JSON.stringify(run)).toBe(before);
+    expect(run.status).toBe('playing');
+  });
+  it('gives a bigger field bigger cells', () => {
+    expect(cellSizeFor(390, 520)).toBeGreaterThan(cellSizeFor(300, 200));
   });
 });
 

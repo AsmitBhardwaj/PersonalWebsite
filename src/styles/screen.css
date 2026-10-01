@@ -73,3 +73,9 @@
 .snake-wrap { position:relative; display:flex; flex:1; min-height:0; background:#0a141a; }
 .snake-field { position:relative; flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; touch-action:none; user-select:none; -webkit-user-select:none; }
 .snake-field canvas { display:block; flex:none; image-rendering:pixelated; }
+/* Lock screen of the shut device. Turned 180deg against the lid so it reads upright when closed; it rotates with the lid until the swap to home. */
+.lock-screen { position:absolute; inset:0; z-index:1; display:none; flex-direction:column; align-items:center; justify-content:center; gap:.5em; transform:rotate(180deg); color:#d7e6ec; background:radial-gradient(ellipse at 50% 40%,#1b2c34,#0a1217 72%); font-family:Arial,sans-serif; text-shadow:0 1px 2px #000; }
+.lock-screen[data-on='true'] { display:flex; }
+.lock-screen__time { font-size:4.2em; font-weight:700; letter-spacing:.02em; opacity:.82; }
+.lock-screen__day { font-size:1.15em; opacity:.55; }
+.lock-screen__name { margin-top:1.1em; font-size:1.5em; font-weight:700; letter-spacing:.24em; text-transform:uppercase; opacity:.62; }

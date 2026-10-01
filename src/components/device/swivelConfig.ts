@@ -93,15 +93,6 @@ export const SWIVEL = {
     worldOffset: { x: -0.08, y: -0.02 },
   },
 
-  /**
-   * Swap between the two faces of the screen layer as it passes edge-on. The front face fades in over the opaque back
-   * face (so the lid never goes see-through), then the back is dropped once the front is fully in.
-   */
-  faceSwap: {
-    frontFadeDeg: [86, 94] as const,
-    backHiddenFromDeg: 94,
-  },
-
   /** The display re-orienting after the swivel, like an OS rotating its UI. The lock-to-home swap happens inside the dim. */
   redraw: {
     dimLevel: 0.04,

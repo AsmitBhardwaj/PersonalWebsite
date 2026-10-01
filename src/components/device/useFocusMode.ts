@@ -100,6 +100,8 @@ interface UseFocusModeOptions {
  */
 export function useFocusMode({ shellRef, enabled, activeApp, presentation, closeApp }: UseFocusModeOptions) {
   const [focused, setFocused] = useState(false);
+  /** True while the enter or exit animation runs, so a game can hold still until the screen has settled. */
+  const [transitioning, setTransitioning] = useState(false);
   const phase = useRef<Phase>('off');
   const mode = useRef<ActiveMode | null>(null);
   const timeline = useRef<gsap.core.Timeline | null>(null);
@@ -168,6 +170,7 @@ export function useFocusMode({ shellRef, enabled, activeApp, presentation, close
     if (wrapper) gsap.set(wrapper, { clearProps: 'opacity' });
     stage.dataset[attr()] = 'on';
     phase.current = 'on';
+    setTransitioning(false);
     if (mode.current === 'zoom') applyZoom(); else applyBox();
   }, [shellRef, applyBox, applyZoom]);
 
@@ -179,6 +182,7 @@ export function useFocusMode({ shellRef, enabled, activeApp, presentation, close
     window.scrollTo(0, 0);
     mode.current = 'zoom';
     phase.current = 'entering';
+    setTransitioning(true);
     stage.dataset.zoom = 'enter';
     document.documentElement.classList.add(ROOT_CLASS);
     const target = zoomTarget();
@@ -205,6 +209,7 @@ export function useFocusMode({ shellRef, enabled, activeApp, presentation, close
     const end = viewportBox(device.box, device.onScreen, viewportSize());
     mode.current = 'focus';
     phase.current = 'entering';
+    setTransitioning(true);
     stage.dataset.focus = 'enter';
     document.documentElement.classList.add(ROOT_CLASS);
     setFocused(true);
@@ -241,6 +246,7 @@ export function useFocusMode({ shellRef, enabled, activeApp, presentation, close
     phase.current = 'off';
     mode.current = null;
     setFocused(false);
+    setTransitioning(false);
     setEpoch((n) => n + 1);
     if (closeAfter) closeRef.current();
   }, [shellRef]);
@@ -252,6 +258,7 @@ export function useFocusMode({ shellRef, enabled, activeApp, presentation, close
     if (phase.current === 'exiting') return;
     timeline.current?.kill();
     phase.current = 'exiting';
+    setTransitioning(true);
     stage.dataset[attr()] = 'exit';
     const reduced = prefersReducedMotion();
     const fadeOut = (target: HTMLElement, closeAfter = true) => {
@@ -346,5 +353,5 @@ export function useFocusMode({ shellRef, enabled, activeApp, presentation, close
     document.documentElement.classList.remove(ROOT_CLASS);
   }, []);
 
-  return { focused, requestHome };
+  return { focused, transitioning, requestHome };
 }

@@ -4,11 +4,10 @@ import { SWIVEL } from './swivelConfig';
 
 gsap.registerPlugin(CustomEase);
 
-const { pose: POSE, swing: SWING, lift: LIFT, shadow: SHADOW, glare: GLARE, faceSwap: FACES, contactShadow: CONTACT } = SWIVEL;
+const { pose: POSE, swing: SWING, lift: LIFT, shadow: SHADOW, glare: GLARE, contactShadow: CONTACT } = SWIVEL;
 
 const clamp = (value: number, min = 0, max = 1) => Math.min(max, Math.max(min, value));
 const lerp = (from: number, to: number, t: number) => from + (to - from) * t;
-const smooth = (t: number) => { const x = clamp(t); return x * x * (3 - 2 * x); };
 const toRad = (deg: number) => deg * Math.PI / 180;
 
 const [x1, y1, x2, y2] = SWING.easeControls;
@@ -53,8 +52,6 @@ export interface Pose {
   scale: number;
   /** 0 at rest, 1 at mid-swing. */
   lift: number;
-  backOpacity: number;
-  frontOpacity: number;
   ghostOpacity: number;
   contact: { y: number; scaleX: number; opacity: number };
   shadowTight: Layer;
@@ -78,8 +75,6 @@ export function poseAt(angle: number): Pose {
     yPercent: lerp(POSE.closedYPercent, POSE.openYPercent, along),
     scale: lerp(1, LIFT.peakScale, lift),
     lift,
-    backOpacity: angle >= FACES.backHiddenFromDeg ? 0 : 1,
-    frontOpacity: smooth((angle - FACES.frontFadeDeg[0]) / (FACES.frontFadeDeg[1] - FACES.frontFadeDeg[0])),
     ghostOpacity: SWIVEL.ghostPeakOpacity * lift,
     contact: {
       y: lerp(CONTACT.closed.y, CONTACT.open.y, clamp(along)),

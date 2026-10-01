@@ -25,11 +25,5 @@
   "pivotInDisplay": {
     "x": 393,
     "y": 296
-  },
-  "storyboardBackCrop": {
-    "left": 100,
-    "top": 320,
-    "width": 315,
-    "height": 212
   }
 }
