@@ -1,5 +1,6 @@
 import { PhoneScreen } from './PhoneScreen';
-import type { AppName } from '../apps/PhoneApps';
+import type { AppId } from '../../apps/types';
+import type { InputBus } from '../../input/inputBus';
 import type { HardwareTerminalState } from './useHardwareKeyboard';
 
 const GENERATED_ROOT = '/assets/device/generated';
@@ -7,15 +8,16 @@ const GENERATED_ROOT = '/assets/device/generated';
 interface DisplayAssemblyProps {
   ready: boolean;
   booting: boolean;
-  activeApp: AppName | null;
+  activeApp: AppId | null;
+  bus: InputBus;
   highlightedIndex: number | null;
   terminal: HardwareTerminalState;
-  openApp: (app: AppName) => void;
+  openApp: (app: AppId) => void;
   goHome: () => void;
   closeTerminal: () => void;
 }
 
-export function DisplayAssembly({ ready, booting, activeApp, highlightedIndex, terminal, openApp, goHome, closeTerminal }: DisplayAssemblyProps) {
+export function DisplayAssembly({ ready, booting, activeApp, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal }: DisplayAssemblyProps) {
   return <>
     <div className="contact-shadow" aria-hidden="true"/>
     <div className="motion-ghost" aria-hidden="true">
@@ -29,7 +31,7 @@ export function DisplayAssembly({ ready, booting, activeApp, highlightedIndex, t
       </div>
       <div className="display-front-face">
         <div className="screen-shell">
-          <PhoneScreen ready={ready} booting={booting} navigation={{ activeApp, highlightedIndex, terminal, openApp, goHome, closeTerminal }}/>
+          <PhoneScreen ready={ready} booting={booting} navigation={{ activeApp, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal }}/>
           <div className="glass-reflection" aria-hidden="true"/>
         </div>
         <img className="display-front-frame" src={`${GENERATED_ROOT}/display-front-frame.png`} alt="" aria-hidden="true" draggable={false}/>

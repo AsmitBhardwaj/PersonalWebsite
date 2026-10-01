@@ -197,3 +197,22 @@ test('captures key map, invisible pointer feedback, command input, result, and m
   await page.mouse.move(1, 1);
   await page.screenshot({ path: 'test-results/hardware-mobile-390x844.png', fullPage: true });
 });
+
+test('while an app is open the terminal stays closed and back/Escape close the app', async ({ page }) => {
+  await openPhone(page);
+  await clickHardware(page, 'dpad-right');
+  await clickHardware(page, 'dpad-center');
+  await expect(page.getByText('Sample project 1 / 3')).toBeVisible();
+  await page.keyboard.type('abc');
+  await page.keyboard.press('Alt+KeyA');
+  await clickHardware(page, 'key-alt');
+  await clickHardware(page, 'key-function');
+  await expect(page.getByTestId('command-buffer')).toHaveCount(0);
+  await expect(page.locator('.hardware-terminal')).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await expect(page.getByRole('button', { name: 'Open Projects' })).toBeVisible();
+  await page.getByRole('button', { name: 'Open Notes' }).click();
+  await clickHardware(page, 'control-back');
+  await expect(page.getByRole('button', { name: 'Open Notes' })).toBeVisible();
+  await expect(page.getByText('Placeholder Track')).toHaveCount(0);
+});

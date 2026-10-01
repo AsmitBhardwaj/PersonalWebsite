@@ -4,10 +4,10 @@ import { DEVICE_REFERENCE, hardwareControls, type HardwareControl } from './hard
 interface HardwareControlsOverlayProps {
   enabled: boolean;
   debug: boolean;
-  pressedId: string | null;
-  onActivate: (control: HardwareControl) => void;
-  onPress: (id: string) => void;
-  onRelease: () => void;
+  pressedIds: ReadonlySet<string>;
+  onActivate: (control: HardwareControl, fromKeyboard: boolean) => void;
+  onPress: (control: HardwareControl) => void;
+  onRelease: (control: HardwareControl) => void;
 }
 
 function overlaps(first: HardwareControl, second: HardwareControl) {
@@ -40,7 +40,7 @@ function findDirectionalIndex(current: HardwareControl, direction: string) {
   return bestIndex;
 }
 
-export function HardwareControlsOverlay({ enabled, debug, pressedId, onActivate, onPress, onRelease }: HardwareControlsOverlayProps) {
+export function HardwareControlsOverlay({ enabled, debug, pressedIds, onActivate, onPress, onRelease }: HardwareControlsOverlayProps) {
   const [tabIndex, setTabIndex] = useState(0);
   const [pointer, setPointer] = useState({ x: 0, y: 0 });
   const buttonRefs = useRef<Array<HTMLButtonElement | null>>([]);
@@ -69,7 +69,7 @@ export function HardwareControlsOverlay({ enabled, debug, pressedId, onActivate,
   };
 
   const activate = (event: MouseEvent<HTMLButtonElement>, control: HardwareControl) => {
-    onActivate(control);
+    onActivate(control, event.detail === 0);
     if (event.detail > 0) event.currentTarget.blur();
   };
 
@@ -91,20 +91,20 @@ export function HardwareControlsOverlay({ enabled, debug, pressedId, onActivate,
       return <button
         ref={(element) => { buttonRefs.current[index] = element; }}
         type="button"
-        className={`hardware-control hardware-control--${control.shape ?? 'rounded-rect'}${pressedId === control.id ? ' is-pressed' : ''}${overlappingIds.has(control.id) ? ' has-overlap' : ''}`}
+        className={`hardware-control hardware-control--${control.shape ?? 'rounded-rect'}${pressedIds.has(control.id) ? ' is-pressed' : ''}${overlappingIds.has(control.id) ? ' has-overlap' : ''}`}
         style={style}
         key={control.id}
         data-control-id={control.id}
         data-action={control.action}
-        data-pressed={pressedId === control.id || undefined}
+        data-pressed={pressedIds.has(control.id) || undefined}
         aria-label={control.label}
         disabled={!enabled}
         tabIndex={enabled && index === tabIndex ? 0 : -1}
         onFocus={() => setTabIndex(index)}
-        onPointerDown={() => onPress(control.id)}
-        onPointerUp={onRelease}
-        onPointerCancel={onRelease}
-        onPointerLeave={onRelease}
+        onPointerDown={() => onPress(control)}
+        onPointerUp={() => onRelease(control)}
+        onPointerCancel={() => onRelease(control)}
+        onPointerLeave={() => onRelease(control)}
         onClick={(event) => activate(event, control)}
       ><span>{control.id}</span></button>;
     })}

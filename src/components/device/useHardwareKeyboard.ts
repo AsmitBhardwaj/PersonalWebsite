@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useReducer, useState } from 'react';
+import { useCallback, useEffect, useReducer, useRef, useState } from 'react';
 import { portfolio } from '../../content/portfolio';
-import type { AppName } from '../apps/PhoneApps';
+import { homeApps } from '../../apps/registry';
+import { navigateGrid } from '../../apps/gridNav';
+import type { AppId } from '../../apps/types';
+import { createInputBus } from '../../input/inputBus';
+import { controlKey, MODIFIER_KEYS, physicalKeyToControlId } from '../../input/keys';
 import { availableCommands, resolveCommand } from './commandRegistry';
 import { hardwareControlById, type HardwareControl } from './hardwareControlMap';
 
 const MAX_BUFFER_LENGTH = 52;
-const homeApps: AppName[] = ['projects', 'experience', 'about', 'notes', 'contact'];
+const MIN_LIGHT_MS = 105;
 
 export interface HardwareTerminalState {
   open: boolean;
@@ -67,8 +71,8 @@ function terminalReducer(state: HardwareTerminalState, action: InputAction): Har
 
 interface UseHardwareKeyboardOptions {
   enabled: boolean;
-  activeApp: AppName | null;
-  openApp: (app: AppName) => void;
+  activeApp: AppId | null;
+  openApp: (app: AppId) => void;
   goHome: () => void;
   highlightedIndex: number | null;
   setHighlightedIndex: (index: number | null) => void;
@@ -78,149 +82,167 @@ function isEditableTarget(target: EventTarget | null) {
   return target instanceof HTMLElement && (target.matches('input, textarea, select') || target.isContentEditable);
 }
 
-function keyToControlId(key: string) {
-  const normalized = key.toLowerCase();
-  if (/^[a-z0-9]$/.test(normalized)) return `key-${normalized}`;
-  if (key === ';' || key === ':') return 'key-semicolon';
-  if (key === ',' || key === '<') return 'key-comma';
-  if (key === '.' || key === '>') return 'key-period';
-  if (key === ' ') return 'key-space';
-  if (key === 'Backspace') return 'key-backspace';
-  if (key === 'Enter') return 'key-enter';
-  if (key === 'Shift') return 'key-shift';
-  return null;
-}
+type Phase = 'down' | 'up';
+type Source = 'keyboard' | 'screen';
 
-export function useHardwareKeyboard({
-  enabled,
-  activeApp,
-  openApp,
-  goHome,
-  highlightedIndex,
-  setHighlightedIndex,
-}: UseHardwareKeyboardOptions) {
+/**
+ * The single input dispatcher. Physical keys and on-screen controls both become a HardwareControl + phase,
+ * then are routed to exactly one owner: the open app, otherwise the home screen (highlight + terminal).
+ */
+export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex }: UseHardwareKeyboardOptions) {
   const [terminal, dispatch] = useReducer(terminalReducer, initialTerminal);
-  const [pressedId, setPressedId] = useState<string | null>(null);
+  const [pressedIds, setPressedIds] = useState<ReadonlySet<string>>(() => new Set());
+  const [bus] = useState(createInputBus);
+  const litAt = useRef(new Map<string, number>());
 
-  const executeCommand = useCallback(() => {
-    const rawCommand = terminal.buffer.trim();
-    if (!rawCommand) {
-      dispatch({ type: 'feedback', feedback: 'Type help for commands.', clearBuffer: true });
-      return;
-    }
+  const latest = useRef({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal });
+  useEffect(() => { latest.current = { enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal }; });
 
-    const destination = resolveCommand(rawCommand);
-    if (!destination) {
-      dispatch({ type: 'feedback', feedback: 'Command not found. Type help.', clearBuffer: true });
-      return;
-    }
+  const light = useCallback((id: string) => {
+    if (!litAt.current.has(id)) litAt.current.set(id, performance.now());
+    setPressedIds((current) => current.has(id) ? current : new Set(current).add(id));
+  }, []);
 
-    if (destination.type === 'app') {
-      openApp(destination.app);
-      dispatch({ type: 'feedback', feedback: `Opening ${destination.app}…`, clearBuffer: true, close: true });
-    } else if (destination.type === 'home') {
-      goHome();
-      dispatch({ type: 'feedback', feedback: 'Home', clearBuffer: true, close: true });
-    } else if (destination.type === 'help') {
-      dispatch({ type: 'feedback', feedback: availableCommands.join(' · '), clearBuffer: true });
-    } else if (destination.type === 'clear') {
-      dispatch({ type: 'clear' });
-    } else {
-      if (destination.destination === 'github') window.open(portfolio.social.github, '_blank', 'noopener,noreferrer');
-      if (destination.destination === 'linkedin') window.open(portfolio.social.linkedin, '_blank', 'noopener,noreferrer');
-      if (destination.destination === 'email') window.location.href = `mailto:${portfolio.email}`;
-      dispatch({ type: 'feedback', feedback: `Opening ${destination.destination}…`, clearBuffer: true, close: true });
-    }
-  }, [goHome, openApp, terminal.buffer]);
+  const unlight = useCallback((id: string) => {
+    const started = litAt.current.get(id);
+    if (started === undefined) return;
+    litAt.current.delete(id);
+    const clear = () => setPressedIds((current) => {
+      if (!current.has(id) || litAt.current.has(id)) return current;
+      const next = new Set(current);
+      next.delete(id);
+      return next;
+    });
+    const wait = MIN_LIGHT_MS - (performance.now() - started);
+    if (wait > 0) window.setTimeout(clear, wait); else clear();
+  }, []);
 
-  const moveHighlight = useCallback((direction: string) => {
-    if (activeApp) {
-      dispatch({ type: 'open', feedback: 'Use Back to return home.' });
-      return;
-    }
-    if (highlightedIndex === null) {
-      setHighlightedIndex(0);
-      return;
-    }
-    const next = (() => {
-      if (direction === 'left') return highlightedIndex === 4 ? 4 : Math.max(0, highlightedIndex - 1);
-      if (direction === 'right') return highlightedIndex === 4 ? 4 : Math.min(3, highlightedIndex + 1);
-      if (direction === 'down') return highlightedIndex < 4 ? 4 : 4;
-      if (direction === 'up') return highlightedIndex === 4 ? 0 : highlightedIndex;
-      return highlightedIndex;
-    })();
-    setHighlightedIndex(next);
-  }, [activeApp, highlightedIndex, setHighlightedIndex]);
+  const openAppFromAnywhere = useCallback((app: AppId) => {
+    dispatch({ type: 'close' });
+    latest.current.openApp(app);
+  }, []);
 
-  const selectHighlighted = useCallback((controlId: string) => {
-    if (activeApp) return;
-    if (highlightedIndex === null) {
-      setHighlightedIndex(0);
-      if (controlId === 'dpad-center') openApp(homeApps[0]);
-      return;
-    }
-    openApp(homeApps[highlightedIndex]);
-  }, [activeApp, highlightedIndex, openApp, setHighlightedIndex]);
+  const routeHome = useCallback((control: HardwareControl, repeat: boolean) => {
+    const s = latest.current;
+    const executeCommand = () => {
+      const rawCommand = s.terminal.buffer.trim();
+      if (!rawCommand) { dispatch({ type: 'feedback', feedback: 'Type help for commands.', clearBuffer: true }); return; }
+      const destination = resolveCommand(rawCommand);
+      if (!destination) { dispatch({ type: 'feedback', feedback: 'Command not found. Type help.', clearBuffer: true }); return; }
+      if (destination.type === 'app') {
+        openAppFromAnywhere(destination.app);
+        dispatch({ type: 'feedback', feedback: `Opening ${destination.app}…`, clearBuffer: true, close: true });
+      } else if (destination.type === 'home') {
+        s.goHome();
+        dispatch({ type: 'feedback', feedback: 'Home', clearBuffer: true, close: true });
+      } else if (destination.type === 'help') {
+        dispatch({ type: 'feedback', feedback: availableCommands.join(' · '), clearBuffer: true });
+      } else if (destination.type === 'clear') {
+        dispatch({ type: 'clear' });
+      } else {
+        if (destination.destination === 'github') window.open(portfolio.social.github, '_blank', 'noopener,noreferrer');
+        if (destination.destination === 'linkedin') window.open(portfolio.social.linkedin, '_blank', 'noopener,noreferrer');
+        if (destination.destination === 'email') window.location.href = `mailto:${portfolio.email}`;
+        dispatch({ type: 'feedback', feedback: `Opening ${destination.destination}…`, clearBuffer: true, close: true });
+      }
+    };
 
-  const activateControl = useCallback((control: HardwareControl) => {
-    if (!enabled) return;
     switch (control.action) {
-      case 'character':
-        dispatch({ type: 'character', value: control.value ?? '', shiftValue: control.shiftValue });
-        break;
+      case 'character': dispatch({ type: 'character', value: control.value ?? '', shiftValue: control.shiftValue }); break;
       case 'space': dispatch({ type: 'space' }); break;
       case 'backspace': dispatch({ type: 'backspace' }); break;
-      case 'shift': dispatch({ type: 'shift' }); break;
+      case 'shift': if (!repeat) dispatch({ type: 'shift' }); break;
       case 'alt': dispatch({ type: 'alt' }); break;
       case 'symbol': dispatch({ type: 'symbol' }); break;
-      case 'enter': executeCommand(); break;
+      case 'enter': if (!repeat) executeCommand(); break;
       case 'open-command': dispatch({ type: 'open', feedback: 'Type help to list commands.' }); break;
-      case 'navigate': moveHighlight(control.value ?? ''); break;
-      case 'select': selectHighlighted(control.id); break;
-      case 'contact':
-        openApp('contact');
-        dispatch({ type: 'close' });
+      case 'navigate': s.setHighlightedIndex(navigateGrid(s.highlightedIndex, control.value ?? '', homeApps.length)); break;
+      case 'select': {
+        if (s.highlightedIndex === null) {
+          s.setHighlightedIndex(0);
+          if (control.id === 'dpad-center') openAppFromAnywhere(homeApps[0].id);
+          break;
+        }
+        openAppFromAnywhere(homeApps[s.highlightedIndex].id);
         break;
-      case 'back':
-        if (terminal.open) dispatch({ type: 'close' });
-        else if (activeApp) goHome();
-        break;
+      }
+      case 'contact': openAppFromAnywhere('contact'); break;
+      case 'back': if (s.terminal.open) dispatch({ type: 'close' }); break;
     }
-  }, [activeApp, enabled, executeCommand, goHome, moveHighlight, openApp, selectHighlighted, terminal.open]);
+  }, [openAppFromAnywhere]);
 
-  const flashControl = useCallback((id: string) => {
-    setPressedId(id);
-    window.setTimeout(() => setPressedId((current) => current === id ? null : current), 105);
-  }, []);
+  /** The routing decision: one owner per event. */
+  const route = useCallback((control: HardwareControl, phase: Phase, repeat: boolean, source: Source) => {
+    const s = latest.current;
+    if (!s.enabled) return;
+    if (s.activeApp) {
+      // An app owns all input: the terminal and home screen never see it.
+      if (control.action === 'back') { if (phase === 'down' && !repeat) s.goHome(); return; }
+      const key = controlKey(control);
+      if (phase === 'up') bus.up(control.id);
+      else if (!(repeat && MODIFIER_KEYS.has(key))) bus.down(control.id, key, { repeat, source });
+      return;
+    }
+    if (phase === 'down') routeHome(control, repeat);
+  }, [bus, routeHome]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (!enabled || event.metaKey || event.ctrlKey || event.altKey || isEditableTarget(event.target)) return;
+      if (!enabled || event.metaKey || event.ctrlKey || event.altKey) return;
       if (event.target instanceof HTMLElement && event.target.closest('.hardware-control')) return;
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        if (terminal.open) dispatch({ type: 'close' });
-        else if (activeApp) goHome();
-        return;
-      }
-      const controlId = keyToControlId(event.key);
-      if (!controlId) return;
-      const control = hardwareControlById.get(controlId);
-      if (!control || (event.repeat && ['shift', 'enter'].includes(control.action))) return;
+      const controlId = physicalKeyToControlId(event.key);
+      const control = controlId ? hardwareControlById.get(controlId) : undefined;
+      if (!controlId || !control) return;
+      light(controlId);
+      // Real inputs keep their typing: only the lighting reacts.
+      if (isEditableTarget(event.target)) return;
       event.preventDefault();
-      flashControl(controlId);
-      activateControl(control);
+      route(control, 'down', event.repeat, 'keyboard');
+    };
+    const onKeyUp = (event: KeyboardEvent) => {
+      const controlId = physicalKeyToControlId(event.key);
+      if (!controlId) return;
+      unlight(controlId);
+      const control = hardwareControlById.get(controlId);
+      if (control && !isEditableTarget(event.target)) route(control, 'up', false, 'keyboard');
+    };
+    const onBlur = () => {
+      bus.releaseAll();
+      [...litAt.current.keys()].forEach(unlight);
     };
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [activateControl, activeApp, enabled, flashControl, goHome, terminal.open]);
+    window.addEventListener('keyup', onKeyUp);
+    window.addEventListener('blur', onBlur);
+    return () => {
+      window.removeEventListener('keydown', onKeyDown);
+      window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('blur', onBlur);
+    };
+  }, [bus, enabled, light, route, unlight]);
 
   return {
     terminal,
-    pressedId,
-    activateControl,
-    pressControl: setPressedId,
-    releaseControl: () => setPressedId(null),
-    closeTerminal: () => dispatch({ type: 'close' }),
+    pressedIds,
+    bus,
+    openApp: openAppFromAnywhere,
+    /** On-screen pointer down: lights the key and, while an app is open, starts a held key. */
+    pressControl: useCallback((control: HardwareControl) => {
+      light(control.id);
+      if (latest.current.activeApp) route(control, 'down', false, 'screen');
+    }, [light, route]),
+    releaseControl: useCallback((control: HardwareControl) => {
+      unlight(control.id);
+      route(control, 'up', false, 'screen');
+    }, [route, unlight]),
+    /** On-screen click. Home handles it here; an app already got pointer down/up, except for keyboard-triggered clicks (detail 0). */
+    activateControl: useCallback((control: HardwareControl, fromKeyboard = false) => {
+      if (!latest.current.enabled) return;
+      if (latest.current.activeApp) {
+        if (fromKeyboard) { route(control, 'down', false, 'screen'); route(control, 'up', false, 'screen'); }
+        return;
+      }
+      routeHome(control, false);
+    }, [route, routeHome]),
+    closeTerminal: useCallback(() => dispatch({ type: 'close' }), []),
   };
 }

@@ -1,5 +1,5 @@
 import { forwardRef, useState } from 'react';
-import type { AppName } from '../apps/PhoneApps';
+import type { AppId } from '../../apps/types';
 import { DeviceBase, GroundShadow } from './DeviceBase';
 import { DisplayAssembly } from './DisplayAssembly';
 import { HardwareControlsOverlay } from './HardwareControlsOverlay';
@@ -13,7 +13,7 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
   const compareDevice = import.meta.env.DEV && new URLSearchParams(window.location.search).get('compareDevice') === '1';
   const showKeyMap = import.meta.env.DEV && new URLSearchParams(window.location.search).get('showKeyMap') === '1';
   const comparisonReference = import.meta.env.DEV ? '/src/assets/device/source/sidekickI.png' : '';
-  const [activeApp, setActiveApp] = useState<AppName | null>(null);
+  const [activeApp, setActiveApp] = useState<AppId | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
   const hardwareEnabled = phase === 'open';
   const goHome = () => setActiveApp(null);
@@ -36,7 +36,8 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
         activeApp={activeApp}
         highlightedIndex={highlightedIndex}
         terminal={hardware.terminal}
-        openApp={setActiveApp}
+        bus={hardware.bus}
+        openApp={hardware.openApp}
         goHome={goHome}
         closeTerminal={hardware.closeTerminal}
       />
@@ -44,7 +45,7 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
     <HardwareControlsOverlay
       enabled={hardwareEnabled}
       debug={showKeyMap}
-      pressedId={hardware.pressedId}
+      pressedIds={hardware.pressedIds}
       onActivate={hardware.activateControl}
       onPress={hardware.pressControl}
       onRelease={hardware.releaseControl}

@@ -1,18 +1,15 @@
-import type { AppName } from '../apps/PhoneApps';
+import { apps } from '../../apps/registry';
+import type { AppId } from '../../apps/types';
 
 export type CommandDestination =
-  | { type: 'app'; app: AppName }
+  | { type: 'app'; app: AppId }
   | { type: 'external'; destination: 'github' | 'linkedin' | 'email' }
   | { type: 'home' }
   | { type: 'help' }
   | { type: 'clear' };
 
 const commands: Record<string, CommandDestination> = {
-  projects: { type: 'app', app: 'projects' },
-  experience: { type: 'app', app: 'experience' },
-  about: { type: 'app', app: 'about' },
-  notes: { type: 'app', app: 'notes' },
-  contact: { type: 'app', app: 'contact' },
+  ...Object.fromEntries(apps.filter((app) => !app.hidden).map((app) => [app.id, { type: 'app', app: app.id } as CommandDestination])),
   github: { type: 'external', destination: 'github' },
   linkedin: { type: 'external', destination: 'linkedin' },
   email: { type: 'external', destination: 'email' },
@@ -22,9 +19,7 @@ const commands: Record<string, CommandDestination> = {
 };
 
 const aliases: Record<string, string> = {
-  proj: 'projects',
-  exp: 'experience',
-  bio: 'about',
+  ...Object.fromEntries(apps.filter((app) => !app.hidden).flatMap((app) => (app.aliases ?? []).map((alias) => [alias, app.id]))),
   mail: 'email',
   gh: 'github',
   li: 'linkedin',
