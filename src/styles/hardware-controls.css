@@ -8,7 +8,8 @@
   touch-action: manipulation;
 }
 
-.hardware-controls-overlay.is-enabled { pointer-events: auto; }
+.hardware-controls-overlay.is-enabled .hardware-control { pointer-events: auto; }
+.hardware-controls-overlay.is-debugging.is-enabled { pointer-events: auto; }
 
 .hardware-control {
   position: absolute;
@@ -25,6 +26,7 @@
   background: transparent;
   box-shadow: none;
   cursor: pointer;
+  pointer-events: none;
   -webkit-tap-highlight-color: transparent;
 }
 

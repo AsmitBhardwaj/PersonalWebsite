@@ -8,7 +8,7 @@ test('intro can be skipped and phone apps work', async ({ page }) => {
   await page.getByRole('button', { name: 'Open Projects', exact: true }).first().click();
   await expect(page.getByText('Signal Garden')).toBeVisible();
   await page.keyboard.press('Escape');
-  await expect(page.getByRole('button', { name: 'Open Contact' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open Contact', exact: true }).first()).toBeVisible();
 });
 
 test('reduced motion enters open state immediately', async ({ page }) => {
