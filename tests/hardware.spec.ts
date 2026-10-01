@@ -42,11 +42,12 @@ async function openPhone(page: Page, path = '/') {
 test('coordinate clicks type, edit, shift, and execute a command', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/');
+  await expect(page.locator('.device-stage')).toHaveAttribute('data-phase', 'wake');
+  await expect(page.locator('.hardware-control:enabled')).toHaveCount(0);
+  // With the lid shut, a tap on it opens the device. The keys under it do not receive the tap.
   await clickHardware(page, 'key-a');
   await expect(page.getByTestId('command-buffer')).toHaveCount(0);
-  await expect(page.locator('.device-stage')).toHaveAttribute('data-phase', 'mid-swivel', { timeout: 3000 });
-  await expect(page.locator('.hardware-control:enabled')).toHaveCount(0);
-  await page.getByRole('button', { name: 'Skip intro' }).click();
+  await expect(page.locator('.device-stage')).toHaveAttribute('data-phase', 'open');
 
   await clickHardware(page, 'key-a');
   await clickHardware(page, 'key-b');

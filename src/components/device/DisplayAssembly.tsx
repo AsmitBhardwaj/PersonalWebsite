@@ -22,13 +22,22 @@ interface DisplayAssemblyProps {
   openApp: (app: AppId) => void;
   goHome: () => void;
   closeTerminal: () => void;
+  /** The lid is shut and awake, so a keyboard user can open it. */
+  lidOpenable: boolean;
+  onOpenRequest: () => void;
 }
 
-export function DisplayAssembly({ ready, booting, activeApp, focused, needsRotate, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal }: DisplayAssemblyProps) {
+export function DisplayAssembly({ ready, booting, activeApp, focused, needsRotate, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, lidOpenable, onOpenRequest }: DisplayAssemblyProps) {
   return <>
     <div className="contact-shadow" aria-hidden="true"/>
     <div className="motion-ghost" aria-hidden="true">
       <img src={`${GENERATED_ROOT}/display-front-frame.png`} alt="" draggable={false}/>
+    </div>
+    <div className="swivel-shadow-clip" aria-hidden="true">
+      <div className="swivel-shadow">
+        <i className="swivel-shadow__layer swivel-shadow__layer--tight"/>
+        <i className="swivel-shadow__layer swivel-shadow__layer--soft"/>
+      </div>
     </div>
     <div className="display-assembly">
       <div className="display-back" aria-hidden="true">
@@ -37,13 +46,16 @@ export function DisplayAssembly({ ready, booting, activeApp, focused, needsRotat
         <span className="notification-led"/>
       </div>
       <div className="display-front-face">
+        <span className="lid-grip" aria-hidden="true"/>
         <div className="screen-shell" ref={shellRef}>
           <PhoneScreen ready={ready} booting={booting} navigation={{ activeApp, focused, needsRotate, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal }}/>
           {touchKeys && <TouchKeyboard {...touchKeys}/>}
           <div className="glass-reflection" aria-hidden="true"/>
+          <div className="glass-glare" aria-hidden="true"><i/></div>
         </div>
         <img className="display-front-frame" src={`${GENERATED_ROOT}/display-front-frame.png`} alt="" aria-hidden="true" draggable={false}/>
       </div>
+      {lidOpenable && <button type="button" className="lid-open" aria-label="Open the device" onClick={onOpenRequest}/>}
     </div>
   </>;
 }

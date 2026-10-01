@@ -5,6 +5,7 @@
   "type": "module",
   "scripts": {
     "assets:device": "node scripts/build-device-assets.mjs",
+    "assets:audio": "node scripts/generate-clack.mjs",
     "dev": "vite --host 0.0.0.0",
     "build": "tsc -b && vite build",
     "lint": "eslint .",

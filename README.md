@@ -15,6 +15,18 @@ Quality checks: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`
 
 All personal copy, projects, experience, notes, social URLs, music metadata, wallpaper path, and resume path live in `src/content/portfolio.ts`. Replace `public/assets/wallpaper/winter.svg` with your own local image and add project imagery under `public/assets/projects` when ready.
 
+## Opening the device
+
+The device wakes up shut and waits for the visitor. A click or tap on the lid, Enter or Space, or the lid's own "Open the device" button runs the full swivel; so does grabbing the lid and dragging it around its hinge. A drag released past 30 degrees completes the swivel with the full snap; short of that it springs back. From the home screen, dragging the open screen's bezel (not the glass) back past 30 degrees closes it the same way. "Skip intro" jumps straight to open, silently. With reduced motion the device starts open, and any open/close is a short crossfade with no recoil, lift or glare movement.
+
+Every tuning value (durations, angles, scale, shadow, recoil, glare, drag threshold) is a named constant in `src/components/device/swivelConfig.ts`. `swivelMotion.ts` holds the pure maths (velocity curve, pose, glare transform) and has unit tests; `swivelController.ts` owns the screen layer's transform and the drag. The controller only writes `transform`, `opacity` and `filter` on the screen layer, its shadow and glare layers, and the device body; the desktop camera zoom animates the outer `.device-wrap`, so the two never share an element.
+
+### Sound
+
+The snap plays `public/assets/audio/clack.wav` (about 5 KB), only for a swivel the visitor started (never for skip or the reduced-motion restore). By default only opening clacks; flip `sound.onClose` in `swivelConfig.ts` to clack on closing too. The sound toggle sits in `.device-controls` (bottom right) and the choice is kept in `localStorage` under `sidekick:muted`. Music controls are meant to join it there.
+
+**Licence:** the clack is synthesised by `scripts/generate-clack.mjs` (`npm run assets:audio`), so it is original work released under CC0 1.0 (public domain). No third-party audio is used.
+
 ## Adding an app or game
 
 1. Create `src/apps/MyApp.tsx` exporting a component. It receives `{ input, paused, close }`.

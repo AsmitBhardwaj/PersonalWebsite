@@ -35,7 +35,8 @@
 }
 
 .display-assembly,
-.motion-ghost {
+.motion-ghost,
+.swivel-shadow {
   position: absolute;
   top: 9.0726%;
   left: 25.2207%;
@@ -152,6 +153,73 @@
   opacity: .5;
   mix-blend-mode: multiply;
 }
+
+/* ---- Swivel (see swivelController.ts; every number lives in swivelConfig.ts) ---- */
+
+/* The screen layer's shadow lands on the body only: the clip is the body art's own silhouette. */
+.swivel-shadow-clip {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+  -webkit-mask: url('/assets/device/generated/device-base-open.png') center / 100% 100% no-repeat;
+  mask: url('/assets/device/generated/device-base-open.png') center / 100% 100% no-repeat;
+}
+
+.swivel-shadow { transform-origin: 50% 58.0392%; }
+
+.swivel-shadow__layer {
+  position: absolute;
+  inset: 0;
+  border-radius: 3%;
+  background: #000;
+  opacity: 0;
+  transform-origin: 50% 50%;
+}
+
+.swivel-shadow__layer--tight { filter: blur(2px); }
+.swivel-shadow__layer--soft { filter: blur(14px); }
+
+/* Specular band. The layer is counter-rotated and counter-translated every frame, so its gradient is fixed in world
+   space and the glass turns beneath it. The glass shell (overflow hidden, rounded) is the mask. */
+.glass-glare {
+  --glare-alpha: .13;
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  overflow: hidden;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.glass-glare i {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 400%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(105deg,
+    transparent 44%,
+    rgb(255 255 255 / calc(var(--glare-alpha) * .4)) 47.5%,
+    rgb(255 255 255 / var(--glare-alpha)) 50%,
+    rgb(255 255 255 / calc(var(--glare-alpha) * .35)) 52.5%,
+    transparent 56%);
+}
+
+/* Grab handles. Closed, the whole lid is the handle. Open, only the bezel is, and only from the home screen, so the
+   glass keeps its own scrolling and taps. */
+.lid-grip { position: absolute; inset: 0; z-index: 0; pointer-events: none; touch-action: none; }
+.device-stage[data-phase='open'][data-has-app='false']:not([data-focus]):not([data-zoom]) .lid-grip { pointer-events: auto; cursor: grab; }
+.device-stage:is([data-phase='closed'], [data-phase='wake'], [data-swiveling]) .display-assembly { touch-action: none; user-select: none; -webkit-user-select: none; }
+.device-stage:is([data-phase='closed'], [data-phase='wake']) .display-assembly { cursor: grab; }
+.device-stage[data-swiveling] .display-assembly { cursor: grabbing; }
+
+/* Keyboard route to opening the lid; the visible state is just a focus ring. */
+.lid-open { position: absolute; inset: 0; z-index: 7; border: 0; border-radius: 2%; padding: 0; background: transparent; pointer-events: none; }
+
+/* Promote the moving layers only around a swivel so they are not resident the rest of the time. */
+.device-stage:is([data-phase='closed'], [data-phase='wake'], [data-swiveling]) :is(.phone, .hardware-controls-overlay, .swivel-shadow, .swivel-shadow__layer, .glass-glare i, .contact-shadow, .motion-ghost) { will-change: transform, opacity; }
 
 @media (prefers-reduced-motion: reduce) {
   .display-assembly,
