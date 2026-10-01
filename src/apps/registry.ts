@@ -1,4 +1,4 @@
-import { BriefcaseBusiness, CircleUserRound, Contact, Keyboard, Music, NotebookPen, StickyNote } from 'lucide-react';
+import { BriefcaseBusiness, CircleUserRound, Contact, Keyboard, Music, NotebookPen, StickyNote, Worm } from 'lucide-react';
 import type { AppDefinition, AppId } from './types';
 import { AboutApp } from './AboutApp';
 import { ContactApp } from './ContactApp';
@@ -6,6 +6,7 @@ import { ExperienceApp } from './ExperienceApp';
 import { MusicApp } from './MusicApp';
 import { NotesApp } from './NotesApp';
 import { ProjectsApp } from './ProjectsApp';
+import { SnakeApp } from './SnakeApp';
 import { TypeApp } from './TypeApp';
 
 /**
@@ -19,6 +20,7 @@ export const apps: AppDefinition[] = [
   { id: 'notes', label: 'Now', icon: StickyNote, tone: '#87a66e', component: NotesApp, presentation: 'read', aliases: ['now'] },
   { id: 'contact', label: 'Contact', icon: Contact, tone: '#ba7a9a', component: ContactApp, presentation: 'read' },
   { id: 'type', label: 'Type', icon: Keyboard, tone: '#8a7bc4', component: TypeApp, presentation: 'play', touchDpad: false, aliases: ['game'] },
+  { id: 'snake', label: 'Snake', icon: Worm, tone: '#3fb8a8', component: SnakeApp, presentation: 'play', touchDpad: true },
   // Music is parked until the player ships: keep the app, hide it everywhere.
   { id: 'music', label: 'Music', icon: Music, tone: '#4d7986', component: MusicApp, presentation: 'read', hidden: true },
 ];
