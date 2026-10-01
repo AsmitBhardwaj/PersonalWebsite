@@ -47,3 +47,19 @@ describe('input bus', () => {
     expect(handler).not.toHaveBeenCalled();
   });
 });
+
+describe('back handler', () => {
+  it('offers Back to the app first and falls through when there is none or it declines', () => {
+    const bus = createInputBus();
+    expect(bus.handleBack()).toBe(false);
+    const release = bus.input.setBackHandler(() => true);
+    expect(bus.handleBack()).toBe(true);
+    bus.input.setBackHandler(() => false);
+    expect(bus.handleBack()).toBe(false);
+    release(); // a stale unregister never removes a newer handler
+    expect(bus.handleBack()).toBe(false);
+    bus.input.setBackHandler(() => true);
+    bus.reset();
+    expect(bus.handleBack()).toBe(false);
+  });
+});

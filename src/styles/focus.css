@@ -20,6 +20,7 @@ html.is-focus-mode .depth-hint, html.is-focus-mode .skip-intro, html.is-focus-mo
 .device-stage[data-focus] .screen-nav b { font-size: .85em; }
 .device-stage[data-focus] .screen-page { padding: 14px 16px; }
 .device-stage[data-focus] .scroll-page { padding-bottom: 16px; }
+.device-stage[data-focus] .photos-page { padding: 0; }
 
 /* Body text stays at 14px or more effective (18px base). Small labels get a floor of .78em. */
 .device-stage[data-focus] :is(.timeline ul, .location, .project-meta, .project-links a, .contact-social a, .copy-button, .inline-back, .notes-list time, .timeline-meta, .timeline .company) { font-size: .82em; }

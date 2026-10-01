@@ -1,0 +1,5 @@
+{
+  "placeholder-1.jpg": { "caption": "Sample photo. Drop your own images in photos-src/ and these disappear.", "date": "2026-09", "place": "Somewhere warm" },
+  "placeholder-2.jpg": { "caption": "Portrait crop, to show how tall photos sit in the grid.", "date": "2026-08" },
+  "placeholder-3.jpg": {}
+}

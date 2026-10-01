@@ -1,4 +1,4 @@
-import { forwardRef, useRef, useState } from 'react';
+import { forwardRef, useCallback, useRef, useState } from 'react';
 import { appById } from '../../apps/registry';
 import type { AppId } from '../../apps/types';
 import { DeviceBase, GroundShadow } from './DeviceBase';
@@ -34,7 +34,10 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
   const shellRef = useRef<HTMLDivElement>(null);
   const app = activeApp ? appById.get(activeApp) : undefined;
   const presentation = app?.presentation ?? 'read';
-  const { focused, transitioning, requestHome: goHome } = useFocusMode({ shellRef, enabled: hardwareEnabled, activeApp, presentation, closeApp: () => setActiveApp(null) });
+  const { focused, transitioning, requestHome } = useFocusMode({ shellRef, enabled: hardwareEnabled, activeApp, presentation, closeApp: () => setActiveApp(null) });
+  // Back, Escape and the nav bar offer the press to the open app first (a photo viewer closes before the app does).
+  const handleBack = useRef<() => boolean>(() => false);
+  const goHome = useCallback(() => { if (!handleBack.current()) requestHome(); }, [requestHome]);
   const hardware = useHardwareKeyboard({
     enabled: hardwareEnabled,
     activeApp,
@@ -47,6 +50,7 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
     onReboot,
     onCloseLid,
   });
+  handleBack.current = hardware.bus.handleBack;
 
   const sideways = useLandscapePhone();
   // A game on a sideways phone has no room for its field and keyboard, so it waits behind a rotate prompt.

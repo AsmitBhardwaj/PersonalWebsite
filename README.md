@@ -15,6 +15,26 @@ Quality checks: `npm run lint`, `npm run typecheck`, `npm test`, `npm run build`
 
 All personal copy, projects, experience, notes, social URLs, music metadata, and wallpaper path live in `src/content/portfolio.ts`. Replace `public/assets/wallpaper/winter.svg` with your own local image and add project imagery under `public/assets/projects` when ready.
 
+## Photos
+
+The Photos app is a photo profile: round avatar, name, post count, a one-line bio (the first sentence of your About copy) and a 3-column grid. Tap a photo, or highlight it with the D-pad and press Enter, to open it with its caption, date and place. Swipe or use left/right to move between photos; Back or Escape returns to the grid, and once more leaves the app.
+
+### Adding photos
+
+1. Drop the originals (JPG, PNG, HEIC, WebP) into `photos-src/`. Delete the three `placeholder-*.jpg` files, or leave them: they are ignored as soon as a real photo exists.
+2. Optionally describe them in `photos-src/captions.json`, keyed by filename. Every field is optional:
+
+   ```json
+   { "IMG_1234.HEIC": { "caption": "Feria night", "date": "2026-09", "place": "Sevilla" } }
+   ```
+
+   `date` is `YYYY`, `YYYY-MM` or `YYYY-MM-DD`. Photos are shown newest first by that date, falling back to the file's modified date.
+3. Run `npm run photos` (it also runs automatically before `dev`, `test`, `typecheck` and `build`, so Vercel does it for you).
+
+`scripts/build-photos.mjs` auto-rotates each image from its EXIF orientation, **strips all metadata, including GPS/location**, resizes to 1080px on the long edge plus a 360px thumbnail, and writes WebP to `public/photos/` and a manifest to `src/content/photos.generated.json`. Both are generated and git-ignored; only `photos-src/` is committed. After writing, the script re-reads every output and **fails the build** if any of them still contains an EXIF, XMP or ICC chunk (EXIF is where GPS lives). Your originals are never served.
+
+Set `INSTAGRAM_URL` in `src/content/photos.ts` to show a "Follow on Instagram" link (empty hides it), and `AVATAR_PHOTO` to a source filename to choose the avatar (empty uses the newest photo).
+
 ## Opening the device
 
 The device wakes up shut and waits for the visitor. A click or tap on the lid, Enter or Space, or the lid's own "Open the device" button runs the full swivel; so does grabbing the lid and dragging it around its hinge. A drag released past 30 degrees completes the swivel with the full snap; short of that it springs back. From the home screen, dragging the open screen's bezel (not the glass) back past 30 degrees closes it the same way. "Skip intro" jumps straight to open, silently. With reduced motion the device starts open, and any open/close is a short crossfade with no recoil, lift or glare movement.
@@ -35,6 +55,8 @@ The snap plays `public/assets/audio/clack.wav` (about 5 KB), only for a swivel t
 Apps render inside `.app-host`, which is clipped to the screen (the bottom 14% is covered by the Back/Home bar). Optional `onOpen` / `onClose` on the entry run when the app opens and just before it unmounts; clean up timers and animation frames in effect cleanups, and stop them while `paused` is true (page hidden).
 
 ### Input
+
+An app that has an inner view (a detail page, a viewer) can claim Back and Escape with `input.setBackHandler(() => boolean)`: return true when the press was used, false to let the app close. Photos uses it to leave the full view.
 
 ## The closed lid
 

@@ -5,3 +5,5 @@ test-results
 .DS_Store
 *.local
 *.tsbuildinfo
+public/photos
+src/content/photos.generated.json

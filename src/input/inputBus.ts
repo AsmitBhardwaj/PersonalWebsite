@@ -12,6 +12,11 @@ export interface AppInput {
   isDown: (key: string) => boolean;
   /** Keys currently held down. Live view: read it each frame. */
   readonly held: ReadonlySet<string>;
+  /**
+   * Let an app take Back/Escape (and the nav bar's Back) before it closes the app. The handler returns true when it used the
+   * press, e.g. to leave a detail view; false lets the app close. Pass null to release. Returns an unregister function.
+   */
+  setBackHandler: (handler: (() => boolean) | null) => () => void;
 }
 
 export interface InputBus {
@@ -20,6 +25,8 @@ export interface InputBus {
   up: (controlId: string) => void;
   /** Emit keyup for everything held (window blur). */
   releaseAll: () => void;
+  /** Offer Back to the open app. True when the app handled it and should stay open. */
+  handleBack: () => boolean;
   /** Forget held keys silently (app closed). */
   reset: () => void;
 }
@@ -30,6 +37,7 @@ export function createInputBus(): InputBus {
   const holders = new Map<string, Set<string>>();
   const held = new Set<string>();
   const sources = new Map<string, AppKeyEvent['source']>();
+  let backHandler: (() => boolean) | null = null;
   const emit = (event: AppKeyEvent) => handlers.forEach((handler) => handler(event));
 
   const bus: InputBus = {
@@ -37,7 +45,12 @@ export function createInputBus(): InputBus {
       subscribe(handler) { handlers.add(handler); return () => { handlers.delete(handler); }; },
       isDown: (key) => held.has(key),
       held,
+      setBackHandler(handler) {
+        backHandler = handler;
+        return () => { if (backHandler === handler) backHandler = null; };
+      },
     },
+    handleBack: () => backHandler?.() ?? false,
     down(controlId, key, { repeat, source }) {
       const set = holders.get(key) ?? new Set<string>();
       const first = set.size === 0;
@@ -59,7 +72,7 @@ export function createInputBus(): InputBus {
       sources.delete(controlId);
     },
     releaseAll() { [...new Set([...holders.values()].flatMap((set) => [...set]))].forEach((id) => bus.up(id)); },
-    reset() { holders.clear(); held.clear(); sources.clear(); },
+    reset() { holders.clear(); held.clear(); sources.clear(); backHandler = null; },
   };
   return bus;
 }

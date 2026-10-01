@@ -1,10 +1,11 @@
-import { BriefcaseBusiness, CircleUserRound, Contact, Keyboard, Music, NotebookPen, StickyNote, Worm } from 'lucide-react';
+import { BriefcaseBusiness, Camera, CircleUserRound, Contact, Keyboard, Music, NotebookPen, StickyNote, Worm } from 'lucide-react';
 import type { AppDefinition, AppId } from './types';
 import { AboutApp } from './AboutApp';
 import { ContactApp } from './ContactApp';
 import { ExperienceApp } from './ExperienceApp';
 import { MusicApp } from './MusicApp';
 import { NotesApp } from './NotesApp';
+import { PhotosApp } from './PhotosApp';
 import { ProjectsApp } from './ProjectsApp';
 import { SnakeApp } from './SnakeApp';
 import { TypeApp } from './TypeApp';
@@ -19,6 +20,7 @@ export const apps: AppDefinition[] = [
   { id: 'about', label: 'About', icon: CircleUserRound, tone: '#6ba7c9', component: AboutApp, presentation: 'read', aliases: ['bio'] },
   { id: 'notes', label: 'Now', icon: StickyNote, tone: '#87a66e', component: NotesApp, presentation: 'read', aliases: ['now'] },
   { id: 'contact', label: 'Contact', icon: Contact, tone: '#ba7a9a', component: ContactApp, presentation: 'read' },
+  { id: 'photos', label: 'Photos', icon: Camera, tone: '#b87a4b', component: PhotosApp, presentation: 'read', aliases: ['photo', 'pics'] },
   { id: 'type', label: 'Type', icon: Keyboard, tone: '#8a7bc4', component: TypeApp, presentation: 'play', touchDpad: false, aliases: ['game'] },
   { id: 'snake', label: 'Snake', icon: Worm, tone: '#3fb8a8', component: SnakeApp, presentation: 'play', touchDpad: true },
   // Music is parked until the player ships: keep the app, hide it everywhere.
