@@ -1,0 +1,35 @@
+{
+  "sourceCanvas": {
+    "width": 1586,
+    "height": 992
+  },
+  "displayBounds": {
+    "left": 400,
+    "top": 90,
+    "width": 786,
+    "height": 510
+  },
+  "lcdOpeningInDisplay": {
+    "x": 147,
+    "y": 63,
+    "width": 494,
+    "height": 381,
+    "radius": 9
+  },
+  "lcdOpeningInSource": {
+    "left": 547,
+    "top": 153,
+    "width": 494,
+    "height": 381
+  },
+  "pivotInDisplay": {
+    "x": 393,
+    "y": 296
+  },
+  "storyboardBackCrop": {
+    "left": 100,
+    "top": 320,
+    "width": 315,
+    "height": 212
+  }
+}

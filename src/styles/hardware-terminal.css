@@ -1,0 +1,33 @@
+.hardware-terminal {
+  position: absolute;
+  z-index: 8;
+  right: 2.5%;
+  bottom: 16.5%;
+  left: 2.5%;
+  min-height: 18%;
+  overflow: hidden;
+  border: 1px solid rgba(153, 188, 201, .64);
+  border-radius: 3px;
+  padding: 2.2% 3% 1.8%;
+  color: #dcebee;
+  background: rgba(8, 16, 20, .91);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .12), 0 2px 5px rgba(0, 0, 0, .42);
+  font-family: "Courier New", ui-monospace, monospace;
+  text-shadow: 0 1px #000;
+}
+
+.hardware-terminal__line { display: flex; min-width: 0; align-items: center; gap: .5em; white-space: nowrap; }
+.hardware-terminal__prompt { flex: 0 0 auto; color: #7fc0d6; font-size: .66em; font-weight: 700; }
+.hardware-terminal output { min-width: 0; overflow: hidden; color: #f0f3ef; font-size: .78em; font-weight: 700; text-overflow: clip; }
+.hardware-terminal__cursor { width: 1px; height: 1em; flex: 0 0 auto; background: #dcebee; animation: hardware-cursor 1s steps(2, jump-none) infinite; }
+.hardware-terminal__meta { display: flex; min-width: 0; margin-top: 1.5%; align-items: center; gap: .8em; color: #76aabd; font-size: .52em; letter-spacing: .05em; }
+.hardware-terminal__meta > span:first-child { flex: 0 0 auto; }
+.hardware-terminal__feedback { overflow: hidden; color: #b8c7ca; text-overflow: ellipsis; white-space: nowrap; }
+.hardware-terminal__close { position: absolute; top: 3%; right: 1.5%; border: 0; padding: 0 .25em; color: #aebfc3; background: transparent; cursor: pointer; font-size: .8em; line-height: 1; }
+.hardware-terminal-live { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
+
+@keyframes hardware-cursor { 50% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .hardware-terminal__cursor { animation: none; }
+}
