@@ -1,3 +1,7 @@
+import { platterProjectStatus } from '../boot/bootConfig';
+
+const platterStatus = platterProjectStatus();
+
 export interface Project {
   title: string;
   summary: string;
@@ -6,8 +10,10 @@ export interface Project {
   demoUrl: string;
   accent: string;
   description?: string;
-  /** Platform and release state, e.g. "iOS · In App Store review". */
+  /** Platform and release state, e.g. "iOS · On the App Store". */
   status?: string;
+  /** Where the status text links, if anywhere. */
+  statusUrl?: string;
   role?: string;
   highlights?: string[];
 }
@@ -81,7 +87,8 @@ export const portfolio: PortfolioContent = {
       sourceUrl: '',
       demoUrl: 'https://platterapp.tech',
       accent: '#637858',
-      status: 'iOS · In App Store review',
+      status: platterStatus.text,
+      statusUrl: platterStatus.href,
       role: 'Solo founder & engineer: product, iOS, backend',
       description: 'An iOS app that turns a recipe Reel, TikTok or blog link into a clean, structured recipe with ingredients, steps and timers. Share a link from any app and it imports in seconds. Includes a guided Cook Mode with per-step timers, a pantry that suggests recipes from what you already have, and budget-aware weekly meal planning that generates a grocery list for only what\u2019s missing.',
       highlights: [

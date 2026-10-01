@@ -28,15 +28,15 @@ interface PhoneScreenNavigation {
   needsRotate?: boolean;
   boot?: BootState;
   bootReducedMotion?: boolean;
-  onBootSkip?: () => void;
-  onBootFinish?: () => void;
+  onBootStart?: () => void;
+  onBootCard?: () => void;
 }
 
 const noop = () => undefined;
 
-interface PhoneScreenProps { ready: boolean; booting: boolean; navigation?: PhoneScreenNavigation; }
+interface PhoneScreenProps { ready: boolean; navigation?: PhoneScreenNavigation; }
 
-export function PhoneScreen({ ready, booting, navigation }: PhoneScreenProps) {
+export function PhoneScreen({ ready, navigation }: PhoneScreenProps) {
   const [internalActiveApp, setInternalActiveApp] = useState<AppId | null>(null);
   const [internalBus] = useState(createInputBus);
   const activeApp = navigation ? navigation.activeApp : internalActiveApp;
@@ -52,7 +52,6 @@ export function PhoneScreen({ ready, booting, navigation }: PhoneScreenProps) {
   }, [navigation]);
 
   return <div className="screen-viewport">
-    <div className={`boot-screen ${booting ? 'is-visible' : ''}`} aria-hidden={!booting}><span className="boot-mark">AB</span><b>ASMIT BHARDWAJ</b><i/></div>
     <div className={`phone-os ${ready ? 'is-ready' : ''}`} style={{ backgroundImage: `url(${portfolio.wallpaperPath})` }}>
       <header className="status-bar"><span><i className="signal-bars"/>{portfolio.statusName}</span><span><Wifi size={11}/><time>10:21</time><i className="battery"/></span></header>
       <main className={`screen-content ${app ? 'has-app' : ''}`}>
@@ -62,7 +61,7 @@ export function PhoneScreen({ ready, booting, navigation }: PhoneScreenProps) {
       {app && <nav className="screen-nav" aria-label="Phone navigation"><button onClick={home} aria-label="Back to phone home"><ChevronLeft/><span>Back</span></button><b>{app.label}</b><button onClick={home} aria-label="Phone home"><Home/><span>Home</span></button></nav>}
       {navigation && <HardwareTerminal terminal={navigation.terminal} onClose={navigation.closeTerminal}/>}
     </div>
-    {navigation?.boot && navigation.boot !== 'off' && <BootSequence active={navigation.boot === 'playing'} reducedMotion={navigation.bootReducedMotion ?? false} onSkip={navigation.onBootSkip ?? noop} onFinish={navigation.onBootFinish ?? noop}/>}
+    {navigation?.boot && navigation.boot !== 'off' && <BootSequence active={navigation.boot === 'playing'} reducedMotion={navigation.bootReducedMotion ?? false} onStart={navigation.onBootStart ?? noop} onCard={navigation.onBootCard ?? noop}/>}
   </div>;
 }
 

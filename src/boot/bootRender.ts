@@ -1,4 +1,4 @@
-import { BOOT, CANVAS, LINK_RECT, PLATTER_TAGLINE } from './bootConfig';
+import { BOOT, CANVAS, LINK_RECT, PLATTER_TAGLINE, START_RECT } from './bootConfig';
 import type { BootScene } from './bootScene';
 
 const { palette: C } = BOOT;
@@ -60,13 +60,6 @@ function drawPlatterIcon(ctx: CanvasRenderingContext2D, x: number, y: number) {
   cream(21, 11, 1, 1); cream(21, 14, 1, 1); // soften the inner corners
 }
 
-/** The return-key glyph, which the pixel font lacks. 7x5. */
-const ENTER_GLYPH = ['......#', '......#', '..#...#', '.######', '..#....'];
-function drawGlyph(ctx: CanvasRenderingContext2D, rows: readonly string[], x: number, y: number, color: string) {
-  ctx.fillStyle = color;
-  rows.forEach((row, ry) => [...row].forEach((cell, rx) => { if (cell === '#') ctx.fillRect(x + rx, y + ry, 1, 1); }));
-}
-
 /** Greedy word wrap to `max` pixels. */
 function wrap(measure: (text: string) => number, text: string, max: number): string[] {
   const lines: string[] = [];
@@ -80,7 +73,7 @@ function wrap(measure: (text: string) => number, text: string, max: number): str
 }
 
 export interface BootRenderer {
-  draw: (scene: BootScene, appStoreLine: string) => void;
+  draw: (scene: BootScene, appStoreLine: string, startPressed?: boolean) => void;
 }
 
 export function createBootRenderer(canvas: HTMLCanvasElement): BootRenderer | null {
@@ -102,7 +95,24 @@ export function createBootRenderer(canvas: HTMLCanvasElement): BootRenderer | nu
     text.draw(ctx!, scene.status, mid, 116, 'small', C.light, 'center');
   }
 
-  function card(scene: BootScene, appStoreLine: string) {
+  /** A flat button with 1px-cut corners and a hard 2px drop shadow. Pressed, the face drops onto the shadow and darkens. */
+  function startButton(pressed: boolean) {
+    const { x, y, width, height } = START_RECT;
+    const w = width - 2;
+    const h = height - 2;
+    const box = (color: string, bx: number, by: number) => {
+      rect(ctx!, color, bx + 1, by, w - 2, h);
+      rect(ctx!, color, bx, by + 1, w, h - 2);
+    };
+    if (!pressed) box(C.dim, x + 2, y + 2);
+    const fx = pressed ? x + 2 : x;
+    const fy = pressed ? y + 2 : y;
+    box(pressed ? C.sageDark : C.sage, fx, fy);
+    if (!pressed) { rect(ctx!, C.sageLight, fx + 2, fy, w - 4, 1); rect(ctx!, C.sageLight, fx, fy + 2, 1, h - 4); }
+    text.draw(ctx!, 'START', fx + w / 2, fy + Math.floor((h - 8) / 2), 'small', C.cream, 'center');
+  }
+
+  function card(appStoreLine: string, pressed: boolean) {
     drawPlatterIcon(ctx!, mid - 16, 10);
     text.draw(ctx!, 'Platter', mid, 48, 'large', C.cream, 'center');
     const lines = wrap((t) => text.width(t, 'small'), PLATTER_TAGLINE, 160);
@@ -112,24 +122,15 @@ export function createBootRenderer(canvas: HTMLCanvasElement): BootRenderer | nu
     rect(ctx!, C.glow, x + 1, y + 1, width - 2, height - 2);
     text.draw(ctx!, appStoreLine, mid, y + 4, 'small', C.amber, 'center');
     text.draw(ctx!, 'platterapp.tech', mid, y + height + 5, 'small', C.mute, 'center');
-    if (scene.prompt) {
-      const before = 'Press ';
-      const after = ' to continue';
-      const total = text.width(before, 'small') + 7 + text.width(after, 'small');
-      const left = Math.round(mid - total / 2);
-      const py = 148;
-      text.draw(ctx!, before, left, py, 'small', C.light);
-      drawGlyph(ctx!, ENTER_GLYPH, left + text.width(before, 'small'), py + 1, C.light);
-      text.draw(ctx!, after, left + text.width(before, 'small') + 7, py, 'small', C.light);
-    }
+    startButton(pressed);
   }
 
   return {
-    draw(scene, appStoreLine) {
+    draw(scene, appStoreLine, startPressed = false) {
       rect(ctx, scene.lit ? C.glow : C.black, 0, 0, CANVAS.width, CANVAS.height);
       if (!scene.lit) return;
       if (scene.stage === 'splash') splash(scene);
-      else if (scene.stage === 'card') card(scene, appStoreLine);
+      else if (scene.stage === 'card') card(appStoreLine, startPressed);
     },
   };
 }

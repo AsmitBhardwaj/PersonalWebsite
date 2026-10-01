@@ -10,7 +10,6 @@ const GENERATED_ROOT = '/assets/device/generated';
 
 interface DisplayAssemblyProps {
   ready: boolean;
-  booting: boolean;
   activeApp: AppId | null;
   focused: boolean;
   needsRotate: boolean;
@@ -28,11 +27,11 @@ interface DisplayAssemblyProps {
   onOpenRequest: () => void;
   boot: BootState;
   bootReducedMotion: boolean;
-  onBootSkip: () => void;
-  onBootFinish: () => void;
+  onBootStart: () => void;
+  onBootCard: () => void;
 }
 
-export function DisplayAssembly({ ready, booting, activeApp, focused, needsRotate, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, lidOpenable, onOpenRequest, boot, bootReducedMotion, onBootSkip, onBootFinish }: DisplayAssemblyProps) {
+export function DisplayAssembly({ ready, activeApp, focused, needsRotate, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, lidOpenable, onOpenRequest, boot, bootReducedMotion, onBootStart, onBootCard }: DisplayAssemblyProps) {
   return <>
     <div className="contact-shadow" aria-hidden="true"/>
     <div className="motion-ghost" aria-hidden="true">
@@ -53,7 +52,7 @@ export function DisplayAssembly({ ready, booting, activeApp, focused, needsRotat
       <div className="display-front-face">
         <span className="lid-grip" aria-hidden="true"/>
         <div className="screen-shell" ref={shellRef}>
-          <PhoneScreen ready={ready} booting={booting} navigation={{ activeApp, focused, needsRotate, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, boot, bootReducedMotion, onBootSkip, onBootFinish }}/>
+          <PhoneScreen ready={ready} navigation={{ activeApp, focused, needsRotate, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, boot, bootReducedMotion, onBootStart, onBootCard }}/>
           {touchKeys && <TouchKeyboard {...touchKeys}/>}
           <div className="glass-reflection" aria-hidden="true"/>
           <div className="glass-glare" aria-hidden="true"><i/></div>

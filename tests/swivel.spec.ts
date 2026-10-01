@@ -1,9 +1,10 @@
-import { expect, test, type Page } from '@playwright/test';
+import type { Page } from '@playwright/test';
+import { expect, MUTE_KEY, test } from './fixtures';
 import { SWIVEL } from '../src/components/device/swivelConfig';
 
 const stage = (page: Page) => page.locator('.device-stage');
 const lid = (page: Page) => page.locator('.display-assembly');
-const SOUND_KEY = 'sidekick:muted';
+
 /** A point on the lid's bezel (above the glass in the open orientation), in the lid's own unrotated frame. */
 const BEZEL = { x: 0, y: 0.44 };
 
@@ -16,9 +17,32 @@ async function spyOnSound(page: Page) {
 }
 const plays = (page: Page) => page.evaluate(() => (window as unknown as { __plays: number }).__plays);
 
+/** Resolves after the browser has handled input and painted twice, so a pointer move has reached the lid before it is read. */
+const nextFrame = (page: Page) => page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))));
+
+/** Waits until the lid has held the same box for several frames, so the hinge geometry a drag is aimed at is final. */
+const layoutSettled = (page: Page) => page.evaluate(() => new Promise<void>((resolve) => {
+  const lidEl = document.querySelector('.display-assembly')!;
+  const key = () => { const r = lidEl.getBoundingClientRect(); return [r.x, r.y, r.width, r.height].map((n) => n.toFixed(2)).join(); };
+  let last = key();
+  let still = 0;
+  const tick = () => {
+    const now = key();
+    still = now === last ? still + 1 : 0;
+    last = now;
+    if (still >= 5) resolve(); else requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}));
+
 async function waitForWake(page: Page) {
   await page.goto('/');
   await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.all([...document.images].map((image) => image.decode().catch(() => undefined)));
+  });
+  await layoutSettled(page);
 }
 
 /** Angle of the screen layer, read from its inline transform. */
@@ -43,14 +67,21 @@ async function lidPoint(page: Page, angle: number, grab = { x: 0, y: 0 }) {
   return { x: g.hx + lx * Math.cos(a) - ly * Math.sin(a), y: g.hy + shift + lx * Math.sin(a) + ly * Math.cos(a) };
 }
 
+/** Polls until the lid is within `tolerance` degrees of `target`, instead of trusting one read just after a pointer move. */
+const expectAngleNear = (page: Page, target: number, tolerance: number) =>
+  expect.poll(async () => Math.abs((await angleOf(page)) - target), { message: `lid angle near ${target}` }).toBeLessThan(tolerance);
+
 async function dragTo(page: Page, from: number, to: number, release = true, grab = { x: 0, y: 0 }) {
   const start = await lidPoint(page, from, grab);
   await page.mouse.move(start.x, start.y);
+  await nextFrame(page);
   await page.mouse.down();
+  await nextFrame(page);
   const steps = 8;
   for (let i = 1; i <= steps; i++) {
     const p = await lidPoint(page, from + (to - from) * i / steps, grab);
     await page.mouse.move(p.x, p.y);
+    await nextFrame(page);
   }
   if (release) await page.mouse.up();
 }
@@ -159,14 +190,13 @@ test.describe('opening the device', () => {
     await waitForWake(page);
     // Hold the pointer down while reading: after release the lid springs back, and a slower browser reads it mid-flight.
     await dragTo(page, 0, 20, false);
-    expect(await angleOf(page)).toBeGreaterThan(18);
-    expect(await angleOf(page)).toBeLessThan(22);
+    await expectAngleNear(page, 20, 2);
     await page.mouse.up();
     await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
     await expect.poll(() => angleOf(page)).toBe(0);
 
     await dragTo(page, 0, 45, false);
-    expect(await angleOf(page)).toBeGreaterThan(43);
+    await expectAngleNear(page, 45, 2);
     await page.mouse.up();
     await expect(stage(page)).toHaveAttribute('data-phase', 'open');
     expect(await angleOf(page)).toBe(180);
@@ -175,10 +205,11 @@ test.describe('opening the device', () => {
   test('the angle follows the pointer while dragging', async ({ page }) => {
     await waitForWake(page);
     await dragTo(page, 0, 100, false);
-    expect(Math.abs((await angleOf(page)) - 100)).toBeLessThan(2);
+    await expectAngleNear(page, 100, 2);
     const back = await lidPoint(page, 60);
     await page.mouse.move(back.x, back.y);
-    expect(Math.abs((await angleOf(page)) - 60)).toBeLessThan(2);
+    await nextFrame(page);
+    await expectAngleNear(page, 60, 2);
     await page.mouse.up();
     await expect(stage(page)).toHaveAttribute('data-phase', 'open');
   });
@@ -240,7 +271,8 @@ test.describe('opening the device', () => {
 });
 
 test.describe('sound', () => {
-  test.use({ viewport: { width: 1440, height: 900 } });
+  // These count and silence real plays, so the run-wide mute (tests/fixtures.ts) is off here.
+  test.use({ viewport: { width: 1440, height: 900 }, muted: false });
 
   test('clacks once for a user-initiated open, and not for skip', async ({ page }) => {
     await spyOnSound(page);
@@ -274,7 +306,7 @@ test.describe('sound', () => {
     const toggle = page.getByRole('button', { name: 'Mute device sounds' });
     await toggle.click();
     await expect(page.getByRole('button', { name: 'Unmute device sounds' })).toHaveAttribute('aria-pressed', 'true');
-    expect(await page.evaluate((key) => window.localStorage.getItem(key), SOUND_KEY)).toBe('1');
+    expect(await page.evaluate((key) => window.localStorage.getItem(key), MUTE_KEY)).toBe('1');
     await page.keyboard.press('Escape');
     await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
     await page.keyboard.press('Enter');

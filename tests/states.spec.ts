@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 const stage = (page: import('@playwright/test').Page) => page.locator('.device-stage');
 

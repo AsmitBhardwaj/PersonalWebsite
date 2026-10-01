@@ -12,6 +12,13 @@ export const PLATTER_SITE_URL = 'https://platterapp.tech';
 export type PlatterAppStoreStatus = 'live' | 'coming_soon';
 export const PLATTER_APP_STORE_STATUS: PlatterAppStoreStatus = 'live';
 
+/** The Platter status on the Projects page, derived from the same constant as the boot card. Only a live listing links out. */
+export function platterProjectStatus(status: PlatterAppStoreStatus = PLATTER_APP_STORE_STATUS): { text: string; href?: string } {
+  return status === 'live'
+    ? { text: 'iOS · On the App Store', href: PLATTER_APP_STORE_URL }
+    : { text: 'iOS · Coming soon to the App Store' };
+}
+
 export const PLATTER_TAGLINE = 'Save any recipe from Reels, TikTok & blogs.';
 
 export function platterAppStoreCopy(status: PlatterAppStoreStatus): { line: string; href: string } {
@@ -38,12 +45,6 @@ export const BOOT = {
   ] as ReadonlyArray<{ from: number; text: string }>,
   version: 'v2.8',
 
-  /** The Platter card auto-advances after this long. */
-  cardMs: 2000,
-  /** Reduced motion: no backlight or splash, and a static card for this long. */
-  reducedCardMs: 1500,
-  promptBlinkMs: 500,
-
   /** Three square-wave notes at the splash. */
   chime: {
     notes: [
@@ -63,11 +64,15 @@ export const BOOT = {
     cream: '#f1e8d0',
     sage: '#637858',
     sageLight: '#9bb28f',
+    sageDark: '#4b5c43',
     amber: '#e8b84a',
   },
 } as const;
 
 export const CANVAS = { width: 240, height: 160 } as const;
+
+/** The Start button on the card, in canvas pixels. It includes the 2px drop shadow, which the pressed state gives up. */
+export const START_RECT = { x: 85, y: 134, width: 72, height: 18 } as const;
 
 /** The tappable App Store line on the card, in canvas pixels. */
 export const LINK_RECT = { x: 40, y: 99, width: 160, height: 15 } as const;

@@ -17,7 +17,8 @@ export default defineConfig({
     reuseExistingServer: true,
   },
   projects: [
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] } },
+    // --mute-audio keeps Chromium silent even where the page's own mute flag (tests/fixtures.ts) is not in play.
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], launchOptions: { args: ['--mute-audio'] } } },
     { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
     { name: 'webkit', use: { ...devices['Desktop Safari'] } },
     { name: 'mobile-safari', use: { ...devices['iPhone 14'] } },

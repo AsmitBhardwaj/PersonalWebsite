@@ -4,7 +4,7 @@ import { PhoneScreen } from './PhoneScreen';
 
 describe('PhoneScreen', () => {
   it('opens an app and returns home with Escape', () => {
-    render(<PhoneScreen ready booting={false}/>);
+    render(<PhoneScreen ready/>);
     fireEvent.click(screen.getAllByRole('button', { name: /^open projects$/i }).find((button) => button.classList.contains('app-icon'))!);
     expect(screen.getByRole('heading', { name: 'Platter' })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: 'Escape' });
@@ -12,14 +12,14 @@ describe('PhoneScreen', () => {
   });
 
   it('opens a note inside the phone', () => {
-    render(<PhoneScreen ready booting={false}/>);
+    render(<PhoneScreen ready/>);
     fireEvent.click(screen.getByRole('button', { name: /^open now$/i }));
     fireEvent.click(screen.getByRole('button', { name: /summer 2027 internships/i }));
     expect(screen.getByText(/looking for summer 2027 software engineering internships/i)).toBeInTheDocument();
   });
 
   it('keeps the placeholder now-playing widget hidden but music reachable by id', () => {
-    render(<PhoneScreen ready booting={false}/>);
+    render(<PhoneScreen ready/>);
     expect(screen.queryByText(/placeholder track/i)).not.toBeInTheDocument();
     expect(screen.getAllByRole('button', { name: /^open /i }).filter((button) => button.classList.contains('app-icon'))).toHaveLength(6);
   });

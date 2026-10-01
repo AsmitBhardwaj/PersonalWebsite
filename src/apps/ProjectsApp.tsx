@@ -20,7 +20,10 @@ export function ProjectsApp({ input }: Pick<AppProps, 'input'>) {
       <div className="project-art" aria-hidden="true"><i/><i/><i/><span>{String(index + 1).padStart(2, '0')}</span></div>
       <header className="project-bar"><i className="project-chip" aria-hidden="true"/><h2>{project.title}</h2><p className="eyebrow">Project {index + 1} / {portfolio.projects.length}</p></header>
       <div className="project-body"><p>{project.summary}</p>
-        {(project.status || project.role) && <p className="project-meta">{[project.status, project.role].filter(Boolean).join(' · ')}</p>}
+        {(project.status || project.role) && <p className="project-meta">
+          {project.status && (project.statusUrl ? <a href={project.statusUrl} target="_blank" rel="noopener noreferrer">{project.status}</a> : project.status)}
+          {project.status && project.role && ' · '}{project.role}
+        </p>}
         {project.description && <p>{project.description}</p>}
         {project.highlights && <ul className="project-highlights">{project.highlights.map((item) => <li key={item}>{item}</li>)}</ul>}
         <div className="tags">{project.technologies.map((item) => <span key={item}>{item}</span>)}</div>

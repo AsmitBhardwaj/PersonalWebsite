@@ -14,17 +14,16 @@ export type BootState = 'off' | 'pending' | 'playing';
 
 interface PhoneDeviceProps {
   ready: boolean;
-  booting: boolean;
   phase: IntroPhase;
   onOpenRequest: () => void;
   boot: BootState;
   bootReducedMotion: boolean;
-  onBootSkip: () => void;
-  onBootFinish: () => void;
+  onBootStart: () => void;
+  onBootCard: () => void;
   onReboot: () => void;
 }
 
-export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function PhoneDevice({ ready, booting, phase, onOpenRequest, boot, bootReducedMotion, onBootSkip, onBootFinish, onReboot }, ref) {
+export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function PhoneDevice({ ready, phase, onOpenRequest, boot, bootReducedMotion, onBootStart, onBootCard, onReboot }, ref) {
   const compareDevice = import.meta.env.DEV && new URLSearchParams(window.location.search).get('compareDevice') === '1';
   const showKeyMap = import.meta.env.DEV && new URLSearchParams(window.location.search).get('showKeyMap') === '1';
   const comparisonReference = import.meta.env.DEV ? '/src/assets/device/source/sidekickI.png' : '';
@@ -43,7 +42,7 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
     highlightedIndex,
     setHighlightedIndex,
     bootActive: boot !== 'off',
-    onBootSkip,
+    onBootStart,
     onReboot,
   });
 
@@ -56,7 +55,6 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
       <DeviceBase/>
       <DisplayAssembly
         ready={ready}
-        booting={booting}
         activeApp={activeApp}
         focused={focused}
         needsRotate={needsRotate}
@@ -78,8 +76,8 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
         onOpenRequest={onOpenRequest}
         boot={boot}
         bootReducedMotion={bootReducedMotion}
-        onBootSkip={onBootSkip}
-        onBootFinish={onBootFinish}
+        onBootStart={onBootStart}
+        onBootCard={onBootCard}
       />
     </section>
     <HardwareControlsOverlay

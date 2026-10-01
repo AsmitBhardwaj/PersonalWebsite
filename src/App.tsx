@@ -21,7 +21,6 @@ export default function App() {
   const timelineRef = useRef<gsap.core.Timeline | null>(null);
   const swivelRef = useRef<SwivelController | null>(null);
   const [ready, setReady] = useState(false);
-  const [booting, setBooting] = useState(false);
   const [introActive, setIntroActive] = useState(true);
   const [introPhase, setIntroPhase] = useState<IntroPhase>('closed');
   const [boot, setBootState] = useState<BootState>('off');
@@ -29,15 +28,20 @@ export default function App() {
   /** The first-visit boot follows an opening swivel, not a skipped intro. */
   const allowBootRef = useRef(true);
   const handoffRef = useRef(false);
+  /** The Platter card is on screen, so Start can be pressed from the trackball or D-pad. */
+  const bootCardRef = useRef(false);
   const [reducedMotion] = useState(prefersReducedMotion);
 
-  const setBoot = useCallback((next: BootState) => { bootRef.current = next; setBootState(next); }, []);
+  const setBoot = useCallback((next: BootState) => { bootRef.current = next; if (next !== 'playing') bootCardRef.current = false; setBootState(next); }, []);
+  const onBootCard = useCallback(() => { bootCardRef.current = true; }, []);
   /** The display has finished redrawing: the boot screen, lit but black until now, starts its clock. */
   const startBootClock = useCallback(() => { if (bootRef.current === 'pending') setBoot('playing'); }, [setBoot]);
 
-  /** Boot is over (it ran out, or a key, tap or trackball press skipped it): back to home through the redraw dim. */
+  /** Start was pressed on the Platter card: the visitor has seen the boot, so flag it, then back to home through the redraw dim. */
   const endBoot = useCallback(() => {
-    if (bootRef.current === 'off' || handoffRef.current) return;
+    if (bootRef.current !== 'playing' || !bootCardRef.current || handoffRef.current) return;
+    markBooted();
+    bootCardRef.current = false;
     const swivel = swivelRef.current;
     if (bootRef.current === 'playing' && swivel && !prefersReducedMotion()) {
       handoffRef.current = true;
@@ -63,7 +67,7 @@ export default function App() {
     gsap.set(stage.querySelector('.back-wake-glow'), { opacity: 0 });
     gsap.set(stage.querySelector('.notification-led'), { opacity: 0.62, boxShadow: '0 0 5px #8fc8ee' });
     gsap.set(stage.querySelector('.ambient-shadow'), { opacity: 0.78, scaleX: 1.04 });
-    setBooting(false); setReady(true); setIntroActive(false);
+    setReady(true); setIntroActive(false);
     allowBootRef.current = withBoot;
     swivelRef.current?.jumpTo('open');
     allowBootRef.current = true;
@@ -84,8 +88,7 @@ export default function App() {
       onContent: (face) => {
         setReady(face === 'home');
         if (face === 'home') {
-          setBooting(false);
-          if (allowBootRef.current && !hasBooted()) { markBooted(); setBoot(prefersReducedMotion() ? 'playing' : 'pending'); }
+          if (allowBootRef.current && !hasBooted()) { setBoot(prefersReducedMotion() ? 'playing' : 'pending'); }
         } else { handoffRef.current = false; setBoot('off'); }
       },
       onRedrawEnd: (face) => { if (face === 'home') startBootClock(); },
@@ -103,7 +106,7 @@ export default function App() {
     const ambient = stage.querySelector('.ambient-shadow');
     const wakeGlow = stage.querySelector('.back-wake-glow');
     const os = stage.querySelector('.phone-os');
-    // The wake-up: the lid is shut, the LED and glow come on, the boot screen is lit behind it. Then it waits for a visitor.
+    // The wake-up: the lid is shut and the LED and glow come on. Then it waits for a visitor.
     const timeline = gsap.timeline({ defaults: { overwrite: 'auto' } });
     timelineRef.current = timeline;
     timeline
@@ -111,9 +114,7 @@ export default function App() {
       .set(wakeGlow, { opacity: 0 })
       .to(led, { opacity: 1, boxShadow: '0 0 9px #8fc8ee', duration: 0.35, ease: 'sine.inOut' }, 0.15)
       .to(glass, { xPercent: 120, duration: 0.48, ease: 'sine.inOut' }, 0.08)
-      .call(() => setBooting(true), [], 0.6)
       .call(() => setIntroPhase('wake'), [], 0.76)
-      .to(stage.querySelector('.boot-screen'), { opacity: 1, duration: 0.32, ease: 'power1.out' }, 0.63)
       .to(wakeGlow, { opacity: 1, duration: 0.3, ease: 'sine.out' }, 0.63)
       .to(ambient, { opacity: 0.78, scaleX: 1.04, duration: 0.5 }, 0.6);
     return () => { timeline.kill(); swivel.destroy(); swivelRef.current = null; };
@@ -144,7 +145,7 @@ export default function App() {
   return <main className="portfolio-stage">
     <a className="skip-link" href="#phone">Skip to portfolio</a>
     <div className="studio-light" aria-hidden="true"/>
-    <div id="phone" className="device-wrap"><PhoneDevice ref={stageRef} ready={ready} booting={booting} phase={introPhase} onOpenRequest={requestOpen} boot={boot} bootReducedMotion={reducedMotion} onBootSkip={endBoot} onBootFinish={endBoot} onReboot={reboot}/></div>
+    <div id="phone" className="device-wrap"><PhoneDevice ref={stageRef} ready={ready} phase={introPhase} onOpenRequest={requestOpen} boot={boot} bootReducedMotion={reducedMotion} onBootStart={endBoot} onBootCard={onBootCard} onReboot={reboot}/></div>
     {/* Device-level controls. Music controls are meant to join the sound toggle here. */}
     <div className="device-controls"><SoundToggle/></div>
     {introActive && <button className="skip-intro" onClick={() => finishIntro()}>Skip intro</button>}

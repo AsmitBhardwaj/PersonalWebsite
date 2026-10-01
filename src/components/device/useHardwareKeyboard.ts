@@ -76,9 +76,9 @@ interface UseHardwareKeyboardOptions {
   goHome: () => void;
   highlightedIndex: number | null;
   setHighlightedIndex: (index: number | null) => void;
-  /** The boot sequence owns the screen: keys do nothing here, and an on-screen control press skips it. */
+  /** The boot sequence owns the screen: keys do nothing here, and the trackball or D-pad centre presses Start. */
   bootActive: boolean;
-  onBootSkip: () => void;
+  onBootStart: () => void;
   onReboot: () => void;
 }
 
@@ -93,14 +93,14 @@ type Source = 'keyboard' | 'screen';
  * The single input dispatcher. Physical keys and on-screen controls both become a HardwareControl + phase,
  * then are routed to exactly one owner: the open app, otherwise the home screen (highlight + terminal).
  */
-export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, bootActive, onBootSkip, onReboot }: UseHardwareKeyboardOptions) {
+export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, bootActive, onBootStart, onReboot }: UseHardwareKeyboardOptions) {
   const [terminal, dispatch] = useReducer(terminalReducer, initialTerminal);
   const [pressedIds, setPressedIds] = useState<ReadonlySet<string>>(() => new Set());
   const [bus] = useState(createInputBus);
   const litAt = useRef(new Map<string, number>());
 
-  const latest = useRef({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal, bootActive, onBootSkip, onReboot });
-  useEffect(() => { latest.current = { enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal, bootActive, onBootSkip, onReboot }; });
+  const latest = useRef({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal, bootActive, onBootStart, onReboot });
+  useEffect(() => { latest.current = { enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal, bootActive, onBootStart, onReboot }; });
 
   const light = useCallback((id: string) => {
     if (!litAt.current.has(id)) litAt.current.set(id, performance.now());
@@ -196,7 +196,7 @@ export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highl
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!enabled || event.metaKey || event.ctrlKey || event.altKey) return;
-      if (event.target instanceof HTMLElement && event.target.closest('.hardware-control, [data-boot-link]')) return;
+      if (event.target instanceof HTMLElement && event.target.closest('.hardware-control, [data-boot-link], [data-boot-start]')) return;
       const controlId = physicalKeyToControlId(event.key);
       const control = controlId ? hardwareControlById.get(controlId) : undefined;
       if (!controlId || !control) return;
@@ -244,7 +244,8 @@ export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highl
     /** On-screen click. Home handles it here; an app already got pointer down/up, except for keyboard-triggered clicks (detail 0). */
     activateControl: useCallback((control: HardwareControl, fromKeyboard = false) => {
       if (!latest.current.enabled) return;
-      if (latest.current.bootActive) { latest.current.onBootSkip(); return; }
+      // Only the trackball or D-pad centre presses Start; every other control is inert behind the boot screen.
+      if (latest.current.bootActive) { if (control.action === 'select') latest.current.onBootStart(); return; }
       if (latest.current.activeApp) {
         if (fromKeyboard) { route(control, 'down', false, 'screen'); route(control, 'up', false, 'screen'); }
         return;

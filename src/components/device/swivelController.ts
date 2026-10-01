@@ -72,9 +72,8 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   const glare = find('.glass-glare i');
   const viewport = find('.screen-viewport');
   const os = find('.phone-os');
-  const boot = find('.boot-screen');
   const overlay = find('.hardware-controls-overlay');
-  if (!display || !back || !front || !phone || !ghost || !contact || !shadow || !shadowTight || !shadowSoft || !glare || !viewport || !os || !boot) {
+  if (!display || !back || !front || !phone || !ghost || !contact || !shadow || !shadowTight || !shadowSoft || !glare || !viewport || !os) {
     throw new Error('Swivel: device markup is missing a layer');
   }
 
@@ -115,7 +114,6 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
 
   function swapContent(face: Face) {
     gsap.set(os, { opacity: face === 'home' ? 1 : 0, filter: 'none' });
-    gsap.set(boot, { opacity: face === 'home' ? 0 : 1 });
     hooks.onContent(face);
   }
 

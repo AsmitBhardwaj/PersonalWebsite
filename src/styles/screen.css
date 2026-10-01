@@ -1,7 +1,4 @@
 .screen-viewport { position:absolute; inset:0; overflow:hidden; border-radius:2%; background:#050708; color:#fff; font-size:clamp(5px,1.02cqw,11px); }
-.boot-screen { position:absolute; inset:0; z-index:4; display:flex; opacity:0; pointer-events:none; align-items:center; justify-content:center; flex-direction:column; gap:5%; color:#d8dde0; background:radial-gradient(circle at 50% 50%,#172027,#050708 70%); letter-spacing:.18em; font-size:clamp(4px,.9cqw,10px); }
-.boot-mark { display:grid; width:13%; aspect-ratio:1; place-items:center; border:1px solid #72818a; border-radius:24%; color:#d9edf7; font-family:Georgia,serif; font-size:1.45em; letter-spacing:0; box-shadow:0 0 14px rgba(136,195,226,.2); }
-.boot-screen i { width:16%; height:2px; overflow:hidden; border-radius:2px; background:#283137; }.boot-screen i::after{content:"";display:block;width:42%;height:100%;background:#91bdd4;animation:boot 1s ease-in-out infinite}@keyframes boot{to{transform:translateX(240%)}}
 .phone-os { position:absolute; inset:0; visibility:hidden; opacity:0; overflow:hidden; background-position:center; background-size:cover; font-family:Arial,sans-serif; }
 .phone-os.is-ready { visibility:visible; }
 .phone-os::before { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(180deg,rgba(8,18,24,.12),rgba(8,18,24,.06) 48%,rgba(8,18,24,.23)); }
@@ -64,9 +61,12 @@
 @keyframes type-blink { 50% { opacity:.45; } }
 @media (prefers-reduced-motion:reduce) { .type-pop, .type-overlay p { animation:none; } }
 /* First-visit boot: a 240x160 canvas scaled with nearest-neighbour, letterboxed to its 3:2 ratio inside the screen layer. */
-.boot-seq { position:absolute; inset:0; z-index:30; display:grid; place-items:center; container-type:size; background:#000; cursor:pointer; }
+.boot-seq { position:absolute; inset:0; z-index:30; display:grid; place-items:center; container-type:size; background:#000; }
 .boot-seq__lcd { position:relative; width:min(100cqw,150cqh); aspect-ratio:3/2; }
 .boot-seq__canvas { display:block; width:100%; height:100%; image-rendering:crisp-edges; image-rendering:pixelated; }
 .boot-seq__link { position:absolute; display:block; cursor:pointer; }
+.boot-seq__start { position:absolute; display:block; margin:0; padding:0; border:0; background:transparent; cursor:pointer; }
+.boot-seq__start:focus-visible { outline:2px solid #f1e8d0; outline-offset:2px; }
 .boot-seq__link:focus-visible { outline:2px solid #f1e8d0; outline-offset:1px; }
 .boot-seq__sr { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.project-meta a{color:inherit;text-decoration:underline;text-underline-offset:2px}
