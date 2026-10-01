@@ -5,6 +5,11 @@ export interface Project {
   sourceUrl: string;
   demoUrl: string;
   accent: string;
+  description?: string;
+  /** Platform and release state, e.g. "iOS · In App Store review". */
+  status?: string;
+  role?: string;
+  highlights?: string[];
 }
 
 export interface ExperienceItem {
@@ -61,7 +66,18 @@ export const portfolio: PortfolioContent = {
       technologies: ['SwiftUI', 'Swift', 'Python', 'FastAPI', 'PostgreSQL', 'OpenAI', 'Railway', 'StoreKit'],
       sourceUrl: '',
       demoUrl: 'https://platterapp.tech',
-      accent: '#d08a5b',
+      accent: '#637858',
+      status: 'iOS · In App Store review',
+      role: 'Solo founder & engineer: product, iOS, backend',
+      description: 'An iOS app that turns a recipe Reel, TikTok or blog link into a clean, structured recipe with ingredients, steps and timers. Share a link from any app and it imports in seconds. Includes a guided Cook Mode with per-step timers, a pantry that suggests recipes from what you already have, and budget-aware weekly meal planning that generates a grocery list for only what\u2019s missing.',
+      highlights: [
+        'Async job pipeline on FastAPI: Instagram caption extraction, TikTok via yt-dlp, and blog import via schema.org JSON-LD with an LLM fallback.',
+        'Shared cross-user recipe cache keyed by canonical video ID, so one import serves every future user of that link.',
+        'Detects publisher bot-blocking and falls back to a paste-the-recipe flow instead of failing silently.',
+        'Pantry matching with word-boundary ingredient normalization and dish-level dedup, with generation as a fallback when matches are thin.',
+        'Budget meal planning with regional cost adjustment.',
+        'Platter Pro subscriptions via StoreKit, plus per-account LLM cost tracking and a hard monthly spend cap.',
+      ],
     },
   ],
   experience: [

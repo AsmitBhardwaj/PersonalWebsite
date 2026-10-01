@@ -53,7 +53,7 @@ test('coordinate clicks type, edit, shift, and execute a command', async ({ page
   await page.keyboard.press('Escape');
   await page.keyboard.type('projects');
   await clickHardware(page, 'key-enter');
-  await expect(page.getByText('Platter')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Platter' })).toBeVisible();
 });
 
 test('commands, aliases, unknown input, and physical keyboard share behavior', async ({ page }) => {
@@ -70,7 +70,7 @@ test('commands, aliases, unknown input, and physical keyboard share behavior', a
   await expect(page.locator('.hardware-terminal__feedback')).toHaveText('Command not found. Type help.');
   await page.keyboard.type('proj');
   await page.keyboard.press('Enter');
-  await expect(page.getByText('Platter')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Platter' })).toBeVisible();
 });
 
 test('D-pad, trackball, call, and back controls route the existing screen', async ({ page }) => {

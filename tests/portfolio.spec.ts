@@ -6,7 +6,7 @@ test('intro can be skipped and phone apps work', async ({ page }) => {
   await page.getByRole('button', { name: 'Skip intro' }).click();
   await expect(page.getByRole('button', { name: 'Open Projects', exact: true }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Open Projects', exact: true }).first().click();
-  await expect(page.getByText('Platter')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Platter' })).toBeVisible();
   await page.keyboard.press('Escape');
   await expect(page.getByRole('button', { name: 'Open Contact', exact: true }).first()).toBeVisible();
 });

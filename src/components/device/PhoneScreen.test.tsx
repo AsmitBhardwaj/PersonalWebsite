@@ -6,7 +6,7 @@ describe('PhoneScreen', () => {
   it('opens an app and returns home with Escape', () => {
     render(<PhoneScreen ready booting={false}/>);
     fireEvent.click(screen.getAllByRole('button', { name: /^open projects$/i }).find((button) => button.classList.contains('app-icon'))!);
-    expect(screen.getByText('Platter')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Platter' })).toBeInTheDocument();
     fireEvent.keyDown(window, { key: 'Escape' });
     expect(screen.getAllByRole('button', { name: /^open projects$/i }).some((button) => button.classList.contains('app-icon'))).toBe(true);
   });
