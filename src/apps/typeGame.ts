@@ -29,9 +29,9 @@ const TERMS = [
   'sandbox', 'pipeline', 'runtime', 'monad', 'tuple', 'enum', 'class', 'object', 'string', 'integer', 'boolean',
 ];
 
-/** Programming terms plus each project title from the portfolio data, joined into one lowercase word ("Open Lane" -> "openlane"). */
+/** Programming terms plus each project title from the portfolio data, joined into one lowercase word ("Open Lane" -> "openlane", a leading "The" dropped: "The Professor" -> "professor"). */
 export function buildWordPool(projectTitles: string[] = portfolio.projects.map((project) => project.title)): string[] {
-  const words = [...TERMS, ...projectTitles.map((title) => title.replace(/[^A-Za-z]/g, ''))].map((word) => word.toLowerCase());
+  const words = [...TERMS, ...projectTitles.map((title) => title.replace(/^the\s+/i, '').replace(/[^A-Za-z]/g, ''))].map((word) => word.toLowerCase());
   return [...new Set(words)].filter((word) => /^[a-z]+$/.test(word));
 }
 

@@ -109,6 +109,8 @@ describe('word pool', () => {
   it('works with a single project and with the portfolio data', () => {
     expect(buildWordPool(['Platter'])).toContain('platter');
     expect(buildWordPool()).toContain('platter');
+    expect(buildWordPool()).toContain('professor');
+    expect(buildWordPool(['The Professor'])).toEqual(expect.arrayContaining(['professor']));
     expect(buildWordPool([])).toContain('mutex');
   });
 });

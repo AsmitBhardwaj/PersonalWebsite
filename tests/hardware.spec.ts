@@ -216,7 +216,7 @@ test('while an app is open the terminal stays closed and back/Escape close the a
   await openPhone(page);
   await clickHardware(page, 'dpad-right');
   await clickHardware(page, 'dpad-center');
-  await expect(page.getByText('Project 1 / 1')).toBeVisible();
+  await expect(page.getByText('Project 1 / 2')).toBeVisible();
   await page.keyboard.type('abc');
   await page.keyboard.press('Alt+KeyA');
   await clickHardware(page, 'key-alt');

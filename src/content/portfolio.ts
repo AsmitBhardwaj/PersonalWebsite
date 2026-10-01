@@ -49,15 +49,15 @@ export interface PortfolioContent {
 export const portfolio: PortfolioContent = {
   name: 'Asmit Bhardwaj',
   statusName: 'Asmit',
-  biography: 'I\u2019m a Computer Science student at Gettysburg College (class of 2028), minoring in Mathematics and Economics. I build products, and I treat every internship and project as founder training. I taught myself to code on my first laptop, an old HP, and I haven\u2019t stopped since. At Gettysburg I\u2019m involved with ACM, Sangam, Math Club and Consulting Club.',
+  biography: 'I\u2019m a Computer Science student at Gettysburg College (class of 2028), minoring in Mathematics and Economics. I build products, and I treat every internship and project as founder training. I taught myself to code on my first laptop, an old HP, and I haven\u2019t stopped since. On campus I\u2019m President of Sangam (100+ members) and Secretary of ACM.',
   currentFocus: 'Right now that means Platter, an iOS app I built solo that turns recipe Reels, TikToks and blog posts into clean, cookable recipes, with pantry-aware suggestions and budget meal planning.',
   location: 'Your city · Available worldwide',
-  email: 'hello@example.com',
+  email: 'bharas01@gettysburg.edu',
   social: {
     github: 'https://github.com/AsmitBhardwaj',
-    linkedin: 'https://www.linkedin.com/',
+    linkedin: 'https://linkedin.com/in/asmitbhardwaj',
   },
-  technologies: ['TypeScript', 'React', 'Node.js', 'Swift', 'Python', 'Figma'],
+  technologies: ['Swift', 'Python', 'TypeScript/React', 'Java', 'JavaScript', 'SQL', 'FastAPI', 'SwiftUI', 'pandas', 'NumPy', 'scikit-learn', 'Claude Code', 'GitHub Copilot', 'Git'],
   interests: ['Marathon running', 'FC Barcelona (lifelong)', 'Cricket', 'Football analytics'],
   projects: [
     {
@@ -79,22 +79,53 @@ export const portfolio: PortfolioContent = {
         'Platter Pro subscriptions via StoreKit, plus per-account LLM cost tracking and a hard monthly spend cap.',
       ],
     },
+    {
+      title: 'The Professor',
+      summary: 'A VS Code extension that explains code step by step, with time and space complexity analysis.',
+      technologies: ['TypeScript', 'JavaScript', 'Python', 'LLM APIs'],
+      sourceUrl: '',
+      demoUrl: '',
+      accent: '#4f6d8f',
+      status: 'Won YCPHacks 2024',
+      role: 'Builder',
+      description: 'A VS Code extension that makes code comprehension more accessible, delivering context-aware, step-by-step explanations and complexity analysis directly inside the editor.',
+      highlights: [
+        'Self-built LLM inference pipeline with modular prompt orchestration and structured output parsing.',
+        'Low-latency design enabling real-time complexity analysis without leaving the editor.',
+      ],
+    },
   ],
   experience: [
     {
-      role: 'AI Engineering Intern', company: 'Tech Mahindra', period: '',
+      role: 'AI Engineering Intern', company: 'Tech Mahindra Americas \u00b7 Plano, TX (Hybrid)', period: 'May 2026 \u2013 Present',
       highlights: [
-        'Worked on Yantr.ai, a field service management platform.',
-        'Built a MILP solver benchmarking suite comparing Gurobi, IBM CPLEX, FICO Xpress and Google OR-Tools on the ROADEF 2007 Challenge dataset.',
-        'Turned the results into a solver procurement recommendation (CPLEX), presented with a full deck and literature review.',
+        'Built a Python benchmarking suite evaluating Gurobi against commercial and open-source solvers (CPLEX, FICO Xpress, HiGHS, OR-Tools), with reproducible test harnesses across MIPLIB and ROADEF benchmark datasets.',
+        'Modeled and solved a Capacitated Vehicle Routing Problem in Gurobi, independently validating correctness and test coverage.',
       ],
       technologies: [],
     },
-    { role: 'Research Assistant', company: 'Stanford AIMI', period: '', highlights: [], technologies: [] },
-    { role: 'Web Development Intern', company: 'Gettysburg College', period: '', highlights: [], technologies: [] },
+    {
+      role: 'Web Development Intern', company: 'Gettysburg College', period: 'Jan 2026 \u2013 May 2026',
+      highlights: [
+        'Coordinated a database migration across an 8-person engineering team, owning scope and sequencing for 2,000 pages of legacy content with zero data loss.',
+        'Built automated failover infrastructure, raising availability from 99.0% to 99.99%.',
+        'Cut average API latency 45% and doubled throughput through query profiling, schema redesign and indexing.',
+      ],
+      technologies: [],
+    },
+    {
+      role: 'Research Assistant', company: 'AIMI, Stanford University \u00b7 Remote', period: 'Aug 2024 \u2013 Dec 2024',
+      highlights: [
+        'Built Python data pipelines (pandas, NumPy, scikit-learn) analyzing glaucoma and ophthalmological disease prevalence in patient data from India.',
+        'Applied clustering and trend detection to identify temporal disease progression patterns, supporting epidemiological hypothesis validation.',
+        'Shared findings through visualizations and reports with public health and clinical teams at eye hospitals in India.',
+      ],
+      technologies: [],
+    },
   ],
   notes: [
-    { title: 'Shipping Platter v1.0, building v1.1', date: '', excerpt: 'Nutrition, budget meal planning, and a smarter grocery list.', body: 'Shipping Platter v1.0 to the App Store and building v1.1: nutrition, budget meal planning, and a smarter grocery list.' },
+    { title: 'AI engineering at Tech Mahindra Americas', date: '', excerpt: 'Optimization solvers and vehicle routing.', body: 'AI engineering internship at Tech Mahindra Americas: optimization solvers and vehicle routing.' },
+    { title: 'Shipping Platter v1.0, building v1.1', date: '', excerpt: 'Nutrition, budget meal planning and a smarter grocery list.', body: 'Shipping Platter v1.0 to the App Store and building v1.1: nutrition, budget meal planning and a smarter grocery list.' },
     { title: 'Summer 2027 internships', date: '', excerpt: 'Looking for software engineering internships.', body: 'Looking for Summer 2027 software engineering internships.' },
   ],
   music: { title: 'Night Transit', artist: 'Placeholder Artist', note: 'Replace title and artist in src/content/portfolio.ts. Audio does not autoplay.' },
