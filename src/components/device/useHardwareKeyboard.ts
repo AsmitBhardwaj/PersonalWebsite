@@ -80,6 +80,8 @@ interface UseHardwareKeyboardOptions {
   bootActive: boolean;
   onBootStart: () => void;
   onReboot: () => void;
+  /** Shut the lid with the closing swivel and clack (the `close` command, home screen only). */
+  onCloseLid: () => void;
 }
 
 function isEditableTarget(target: EventTarget | null) {
@@ -93,14 +95,14 @@ type Source = 'keyboard' | 'screen';
  * The single input dispatcher. Physical keys and on-screen controls both become a HardwareControl + phase,
  * then are routed to exactly one owner: the open app, otherwise the home screen (highlight + terminal).
  */
-export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, bootActive, onBootStart, onReboot }: UseHardwareKeyboardOptions) {
+export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, bootActive, onBootStart, onReboot, onCloseLid }: UseHardwareKeyboardOptions) {
   const [terminal, dispatch] = useReducer(terminalReducer, initialTerminal);
   const [pressedIds, setPressedIds] = useState<ReadonlySet<string>>(() => new Set());
   const [bus] = useState(createInputBus);
   const litAt = useRef(new Map<string, number>());
 
-  const latest = useRef({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal, bootActive, onBootStart, onReboot });
-  useEffect(() => { latest.current = { enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal, bootActive, onBootStart, onReboot }; });
+  const latest = useRef({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal, bootActive, onBootStart, onReboot, onCloseLid });
+  useEffect(() => { latest.current = { enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal, bootActive, onBootStart, onReboot, onCloseLid }; });
 
   const light = useCallback((id: string) => {
     if (!litAt.current.has(id)) litAt.current.set(id, performance.now());
@@ -143,6 +145,10 @@ export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highl
         dispatch({ type: 'feedback', feedback: availableCommands.join(' · '), clearBuffer: true });
       } else if (destination.type === 'clear') {
         dispatch({ type: 'clear' });
+      } else if (destination.type === 'close') {
+        if (s.activeApp) { dispatch({ type: 'feedback', feedback: 'Go home first.', clearBuffer: true }); return; }
+        dispatch({ type: 'close' });
+        s.onCloseLid();
       } else if (destination.type === 'reboot') {
         dispatch({ type: 'close' });
         s.onReboot();

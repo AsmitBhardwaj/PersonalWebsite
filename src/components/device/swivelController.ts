@@ -1,5 +1,6 @@
 import gsap from 'gsap';
 import { playClack } from '../../audio/clack';
+import { createIdleScheduler } from './idleNudge';
 import { SWIVEL } from './swivelConfig';
 import {
   SWING_TRAVEL, SWIVEL_REST, angleAtDistance, distanceAtAngle, glareTransform, poseAt, recoilDirection, shouldComplete,
@@ -32,7 +33,7 @@ export interface SwivelController {
   destroy: () => void;
 }
 
-const { pose: POSE, swing: SWING, drag: DRAG, recoil: RECOIL, redraw: REDRAW } = SWIVEL;
+const { pose: POSE, swing: SWING, drag: DRAG, recoil: RECOIL, redraw: REDRAW, idle: IDLE } = SWIVEL;
 const REST_ANGLE: Record<Rest, number> = { closed: SWIVEL_REST.closed, open: SWIVEL_REST.open };
 const seconds = (ms: number) => ms / 1000;
 const prefersReducedMotion = () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -80,6 +81,9 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   let busy = false;
   let ghostOn = true;
   let drag: DragState | null = null;
+  let nudging = false;
+  /** The device has been open at least once, so the visitor has found the lid and the auto-open safety net has done its job. */
+  let everOpened = false;
   let active: gsap.core.Animation[] = [];
   let size: Size = { w: display.offsetWidth, h: display.offsetHeight };
   const recoilTargets = [phone, overlay].filter((node): node is HTMLElement => Boolean(node));
@@ -114,6 +118,7 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   }
 
   function stopAll() {
+    nudging = false;
     active.forEach((animation) => animation.kill());
     active = [];
     gsap.killTweensOf(stage);
@@ -130,8 +135,42 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
     setRecoil(0);
     setMoving(false);
     gsap.set(viewport, { clearProps: 'opacity' });
+    if (next === 'closed') idle.start(); else { everOpened = true; idle.stop(); }
     if (phase) hooks.onPhase(phase);
   }
+
+  /** A short silent lift of the lid and the usual spring back, to say "this opens". */
+  function nudge() {
+    nudging = true;
+    busy = true;
+    ghostOn = false;
+    const state = { a: angle };
+    track(gsap.timeline({ onComplete: () => { nudging = false; busy = false; ghostOn = true; render(REST_ANGLE.closed); } })
+      .to(state, { a: IDLE.nudgeDeg, duration: seconds(IDLE.nudgeLiftMs), ease: 'power2.out', onUpdate: () => render(state.a) })
+      .to(state, { a: REST_ANGLE.closed, duration: seconds(SWING.springBackMs), ease: `back.out(${SWING.springBackOvershoot})`, onUpdate: () => render(state.a) }));
+  }
+
+  /** Any interaction ends a nudge on the spot, back at rest. */
+  function cancelNudge() {
+    if (!nudging) return;
+    stopAll();
+    busy = false;
+    ghostOn = true;
+    render(REST_ANGLE.closed);
+  }
+
+  const idle = createIdleScheduler(IDLE, {
+    active: () => rest === 'closed' && !busy && !drag && !document.hidden,
+    nudge,
+    autoOpen: () => api.open({ user: false }),
+    nudgesEnabled: () => !prefersReducedMotion(),
+    autoOpenEnabled: () => !everOpened,
+  });
+  const onInteraction = () => { cancelNudge(); if (rest === 'closed' && !busy && !drag) idle.start(); };
+  const onVisibility = () => { if (!document.hidden) onInteraction(); };
+  const INTERACTIONS = ['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart'] as const;
+  INTERACTIONS.forEach((type) => window.addEventListener(type, onInteraction, { passive: true }));
+  document.addEventListener('visibilitychange', onVisibility);
 
   /** The display going near-black and coming back with the other face, like an OS re-orienting. */
   function dimThrough(swap: () => void, onEnd?: () => void): gsap.core.Timeline {
@@ -168,6 +207,7 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   /** Runs the swing from `from` to the overshoot peak, joining the velocity curve at the matching point. */
   function swing(dir: 1 | -1, from: number, user: boolean) {
     stopAll();
+    idle.stop();
     busy = true;
     setMoving(true);
     hooks.onPhase('swivel');
@@ -192,6 +232,7 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   function crossfade(dir: 1 | -1, user: boolean) {
     const target: Rest = dir > 0 ? 'open' : 'closed';
     stopAll();
+    idle.stop();
     busy = true;
     hooks.onPhase('swivel');
     if (user && wantsClack(dir)) playClack();
@@ -261,6 +302,7 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   };
 
   function onPointerDown(event: PointerEvent) {
+    cancelNudge();
     if (drag || (event.pointerType === 'mouse' && event.button !== 0) || !canGrab(event.target)) return;
     const dir: 1 | -1 = rest === 'closed' ? 1 : -1;
     const start = { x: event.clientX, y: event.clientY };
@@ -276,6 +318,7 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
       if (Math.hypot(event.clientX - drag.start.x, event.clientY - drag.start.y) < DRAG.tapSlopPx) return;
       if (drag.dir > 0) hooks.onBeforeOpen?.();
       drag.moved = true;
+      idle.stop();
       busy = true;
       ghostOn = false;
       setMoving(true);
@@ -306,11 +349,13 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   display.addEventListener('pointercancel', onPointerCancel);
 
   render(REST_ANGLE.closed);
+  idle.start();
 
   const api: SwivelController = {
     get rest() { return rest; },
     get busy() { return busy; },
     open({ user = true } = {}) {
+      cancelNudge();
       if (busy || rest === 'open') return;
       hooks.onBeforeOpen?.();
       run(1, user);
@@ -329,6 +374,9 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
       track(dimThrough(swap, onEnd));
     },
     destroy() {
+      idle.stop();
+      INTERACTIONS.forEach((type) => window.removeEventListener(type, onInteraction));
+      document.removeEventListener('visibilitychange', onVisibility);
       stopAll();
       observer?.disconnect();
       display.removeEventListener('pointerdown', onPointerDown);

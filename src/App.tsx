@@ -59,6 +59,9 @@ export default function App() {
     } else setBoot('playing');
   }, [setBoot, startBootClock]);
 
+  /** The `close` command: the reverse swivel with its clack. */
+  const closeLid = useCallback(() => { swivelRef.current?.close({ user: true }); }, []);
+
   /** Skip: straight to the open pose with no animation and no sound. */
   const finishIntro = useCallback((withBoot = false) => {
     const stage = stageRef.current;
@@ -142,7 +145,7 @@ export default function App() {
   return <main className="portfolio-stage">
     <a className="skip-link" href="#phone">Skip to portfolio</a>
     <div className="studio-light" aria-hidden="true"/>
-    <div id="phone" className="device-wrap"><PhoneDevice ref={stageRef} ready={ready} phase={introPhase} onOpenRequest={requestOpen} boot={boot} bootReducedMotion={reducedMotion} onBootStart={endBoot} onBootCard={onBootCard} onReboot={reboot}/></div>
+    <div id="phone" className="device-wrap"><PhoneDevice ref={stageRef} ready={ready} phase={introPhase} onOpenRequest={requestOpen} boot={boot} bootReducedMotion={reducedMotion} onBootStart={endBoot} onBootCard={onBootCard} onReboot={reboot} onCloseLid={closeLid}/></div>
     {/* Device-level controls. Music controls are meant to join the sound toggle here. */}
     <div className="device-controls"><SoundToggle/></div>
     {introActive && <button className="skip-intro" onClick={() => finishIntro()}>Skip intro</button>}

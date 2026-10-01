@@ -10,12 +10,13 @@ function setup(initialApp: string | null, bootActive = false) {
   const setHighlightedIndex = vi.fn();
   const onBootStart = vi.fn();
   const onReboot = vi.fn();
+  const onCloseLid = vi.fn();
   const hook = renderHook((props: { activeApp: string | null; highlightedIndex?: number | null }) => useHardwareKeyboard({
-    enabled: true, activeApp: props.activeApp, openApp, goHome, highlightedIndex: props.highlightedIndex ?? null, setHighlightedIndex, bootActive, onBootStart, onReboot,
+    enabled: true, activeApp: props.activeApp, openApp, goHome, highlightedIndex: props.highlightedIndex ?? null, setHighlightedIndex, bootActive, onBootStart, onReboot, onCloseLid,
   }), { initialProps: { activeApp: initialApp } as { activeApp: string | null; highlightedIndex?: number | null } });
   const events: AppKeyEvent[] = [];
   hook.result.current.bus.input.subscribe((event) => events.push(event));
-  return { hook, openApp, goHome, setHighlightedIndex, events, onBootStart, onReboot };
+  return { hook, openApp, goHome, setHighlightedIndex, events, onBootStart, onReboot, onCloseLid };
 }
 
 const press = (key: string, target: Window | Element = window) => fireEvent.keyDown(target, { key });
@@ -28,6 +29,16 @@ describe('central input dispatcher', () => {
     [...'reboot', 'Enter'].forEach((key) => press(key));
     expect(onReboot).toHaveBeenCalledTimes(1);
     expect(hook.result.current.terminal.open).toBe(false);
+  });
+
+  it('runs close from the terminal on the home screen, and not from inside an app', () => {
+    const home = setup(null);
+    [...'close', 'Enter'].forEach((key) => press(key));
+    expect(home.onCloseLid).toHaveBeenCalledTimes(1);
+    expect(home.hook.result.current.terminal.open).toBe(false);
+    const inApp = setup('projects');
+    [...'close', 'Enter'].forEach((key) => press(key));
+    expect(inApp.onCloseLid).not.toHaveBeenCalled(); // an open app gets the keys, so the terminal never sees the command
   });
 
   it('leaves the keyboard alone while the boot sequence plays, and starts from the trackball or D-pad centre only', () => {

@@ -108,10 +108,28 @@ export const SWIVEL = {
   sound: {
     url: '/assets/audio/clack.wav',
     volume: 0.6,
-    /** The clack fires on user-initiated swivels only, never on skip, autoplay or reduced-motion restores. */
+    /** The clack fires on user-initiated swivels only (open or close), never on skip, the idle auto-open or reduced-motion restores. */
     onOpen: true,
-    onClose: false,
+    onClose: true,
     storageKey: 'sidekick:muted',
+  },
+
+  /**
+   * Discoverability while the device sits closed and nobody touches it. Any pointer or key interaction restarts the idle
+   * clock and cancels a nudge in progress. These are real waits, so they are not scaled by SWIVEL_SPEED.
+   */
+  idle: {
+    /** Idle time before the first nudge. */
+    nudgeAfterMs: 3000,
+    /** Gap between nudges while still idle. */
+    nudgeEveryMs: 6000,
+    maxNudges: 3,
+    /** How far the lid lifts in a nudge before springing back (silent, same spring as a released short drag). */
+    nudgeDeg: 7,
+    /** Time the lid takes to lift to the nudge peak. */
+    nudgeLiftMs: slow(140),
+    /** Safety net: still closed and untouched after this long, the lid opens itself, silently, into the normal boot/home flow. */
+    autoOpenAfterMs: 12000,
   },
 
   /** Ghost of the lid left behind mid-swing (existing intro flourish). */

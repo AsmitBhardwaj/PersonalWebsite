@@ -71,20 +71,66 @@ async function lidPoint(page: Page, angle: number, grab = { x: 0, y: 0 }) {
 const expectAngleNear = (page: Page, target: number, tolerance: number) =>
   expect.poll(async () => Math.abs((await angleOf(page)) - target), { message: `lid angle near ${target}` }).toBeLessThan(tolerance);
 
-async function dragTo(page: Page, from: number, to: number, release = true, grab = { x: 0, y: 0 }) {
+async function dragTo(page: Page, from: number, to: number, release = true, grab = { x: 0, y: 0 }, frame: (page: Page) => Promise<unknown> = nextFrame) {
   const start = await lidPoint(page, from, grab);
   await page.mouse.move(start.x, start.y);
-  await nextFrame(page);
+  await frame(page);
   await page.mouse.down();
-  await nextFrame(page);
+  await frame(page);
   const steps = 8;
   for (let i = 1; i <= steps; i++) {
     const p = await lidPoint(page, from + (to - from) * i / steps, grab);
     await page.mouse.move(p.x, p.y);
-    await nextFrame(page);
+    await frame(page);
   }
   if (release) await page.mouse.up();
 }
+
+/**
+ * Mocked time: Playwright's clock fakes timers, requestAnimationFrame, Date and performance (so GSAP too), and nothing advances until a test
+ * runs it. Swivel timings then depend on the script, not on how loaded the machine is.
+ */
+async function pausedClockAt(page: Page) {
+  await page.clock.install({ time: 0 });
+  await page.clock.pauseAt(1000);
+}
+const runFor = (page: Page, ms: number) => page.clock.runFor(ms);
+/** One mocked frame, in place of waiting for a real one. */
+const tick32 = (page: Page) => runFor(page, 32);
+
+/** The mocked-time version of `waitForWake`: the wake-up timeline is run, not waited for. */
+async function waitForWakeMocked(page: Page) {
+  await pausedClockAt(page);
+  await page.goto('/');
+  await page.evaluate(async () => {
+    await document.fonts.ready;
+    await Promise.all([...document.images].map((image) => image.decode().catch(() => undefined)));
+  });
+  await runFor(page, 1500);
+  await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
+  // The idle clock starts at page load. A pointer move restarts it, so tests count idle time from here.
+  await page.mouse.move(1, 1);
+}
+
+/** Records the highest lid angle and the number of separate lifts since this was called, sampled every mocked frame. */
+async function watchLid(page: Page) {
+  await page.evaluate(() => {
+    const lidEl = document.querySelector<HTMLElement>('.display-assembly')!;
+    const w = window as unknown as { __lid: { max: number; lifts: number; phases: string[] } };
+    w.__lid = { max: 0, lifts: 0, phases: [] };
+    let low = true;
+    const tick = () => {
+      const a = Number(/rotate\((-?[\d.]+(?:e-?\d+)?)deg\)/.exec(lidEl.style.transform)?.[1] ?? 0);
+      w.__lid.max = Math.max(w.__lid.max, a);
+      if (low && a > 2 && a < 20) { w.__lid.lifts += 1; low = false; } else if (a < 0.5) low = true;
+      const phase = document.querySelector('.device-stage')!.getAttribute('data-phase') ?? '';
+      if (w.__lid.phases[w.__lid.phases.length - 1] !== phase) w.__lid.phases.push(phase);
+      requestAnimationFrame(tick);
+    };
+    requestAnimationFrame(tick);
+  });
+}
+const lidWatch = (page: Page) => page.evaluate(() => (window as unknown as { __lid: { max: number; lifts: number; phases: string[] } }).__lid);
 
 test.describe('opening the device', () => {
   test.use({ viewport: { width: 1440, height: 900 } });
@@ -374,6 +420,122 @@ test.describe('closed state', () => {
   });
 });
 
+test.describe('idle nudge and auto-open (mocked time)', () => {
+  test.use({ viewport: { width: 1440, height: 900 }, muted: false });
+
+  test('nudges after 3 s idle: lifts about 7 degrees, springs back to rest, silent, and the device stays closed', async ({ page }) => {
+    await spyOnSound(page);
+    await waitForWakeMocked(page);
+    await watchLid(page);
+    await runFor(page, 2900);
+    expect((await lidWatch(page)).max).toBe(0); // not before 3 s
+    await runFor(page, 700);
+    const nudged = await lidWatch(page);
+    expect(nudged.max).toBeGreaterThanOrEqual(6);
+    expect(nudged.max).toBeLessThanOrEqual(8);
+    await runFor(page, 1500);
+    expect(await angleOf(page)).toBe(0);
+    expect(nudged.phases).toEqual(['wake']); // never a swivel
+    await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
+    expect(await plays(page)).toBe(0);
+  });
+
+  test('an interaction restarts the wait, and cancels a nudge that is already lifting', async ({ page }) => {
+    await waitForWakeMocked(page);
+    await watchLid(page);
+    await runFor(page, 2500);
+    await page.mouse.move(5, 5);
+    await runFor(page, 2800); // 5.3 s in, but only 2.8 s since the interaction
+    expect((await lidWatch(page)).max).toBe(0);
+    await runFor(page, 400); // 3.2 s since the interaction: the nudge starts
+    await runFor(page, 100);
+    expect(await angleOf(page)).toBeGreaterThan(0.5);
+    await page.mouse.move(20, 20); // mid-nudge
+    expect(await angleOf(page)).toBe(0); // straight back to rest
+    await runFor(page, 3200);
+    expect((await lidWatch(page)).lifts).toBe(2); // and the wait started over, so it nudges again afterwards
+  });
+
+  test('a key press counts as an interaction too', async ({ page }) => {
+    await waitForWakeMocked(page);
+    await watchLid(page);
+    await runFor(page, 2800);
+    await page.keyboard.press('Shift');
+    await runFor(page, 2800);
+    expect((await lidWatch(page)).max).toBe(0);
+  });
+
+  test('auto-opens silently at 12 s, hides the pill and carries on into the home screen', async ({ page }) => {
+    await spyOnSound(page);
+    await waitForWakeMocked(page);
+    await runFor(page, 11_500);
+    await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
+    await expect(page.locator('.open-prompt')).toBeVisible();
+    await runFor(page, 600);
+    await expect(stage(page)).not.toHaveAttribute('data-phase', 'wake');
+    await expect(page.locator('.open-prompt')).toHaveCount(0);
+    await runFor(page, 3000);
+    await expect(stage(page)).toHaveAttribute('data-phase', 'open');
+    expect(await angleOf(page)).toBe(180);
+    await expect(stage(page)).toHaveAttribute('data-ready', 'true');
+    await expect(page.getByRole('button', { name: 'Open Projects', exact: true }).first()).toBeVisible();
+    expect(await plays(page)).toBe(0); // silent
+  });
+
+  test('an interaction pushes the auto-open back', async ({ page }) => {
+    await waitForWakeMocked(page);
+    await runFor(page, 8000);
+    await page.mouse.move(9, 9);
+    await runFor(page, 8000); // 16 s in, 8 s since the interaction
+    await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
+    await runFor(page, 6500); // 14.5 s since
+    await runFor(page, 2000);
+    await expect(stage(page)).toHaveAttribute('data-phase', 'open');
+  });
+
+  test('the close command shuts the lid with the clack; the lid then nudges at most 3 times and never reopens itself', async ({ page }) => {
+    test.setTimeout(90_000);
+    await spyOnSound(page);
+    await waitForWakeMocked(page);
+    await page.keyboard.press('Enter');
+    await runFor(page, 3000);
+    await expect(stage(page)).toHaveAttribute('data-phase', 'open');
+    expect(await plays(page)).toBe(1);
+
+    await page.keyboard.type('close');
+    await page.keyboard.press('Enter');
+    await runFor(page, 3000);
+    await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
+    expect(await angleOf(page)).toBe(0);
+    expect(await plays(page)).toBe(2); // the close clacks as well
+    await expect(page.locator('.lock-screen')).toBeVisible();
+
+    await watchLid(page);
+    await runFor(page, 30_000); // a fourth would come at 21 s
+    const idle = await lidWatch(page);
+    expect(idle.lifts).toBe(3);
+    expect(idle.phases).toEqual(['wake']); // no auto-open once the visitor has opened it themselves
+    expect(await plays(page)).toBe(2); // nudges are silent
+  });
+
+  test('reduced motion: closing crossfades and the closed lid never nudges', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await pausedClockAt(page);
+    await page.goto('/');
+    await expect(stage(page)).toHaveAttribute('data-phase', 'open');
+    await runFor(page, 1000);
+    await page.keyboard.type('close');
+    await page.keyboard.press('Enter');
+    await runFor(page, 1000);
+    await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
+    await watchLid(page);
+    await runFor(page, 25_000);
+    const idle = await lidWatch(page);
+    expect(idle.max).toBe(0);
+    expect(idle.phases).toEqual(['wake']);
+  });
+});
+
 test.describe('sound', () => {
   // These count and silence real plays, so the run-wide mute (tests/fixtures.ts) is off here.
   test.use({ viewport: { width: 1440, height: 900 }, muted: false });
@@ -391,17 +553,23 @@ test.describe('sound', () => {
     expect(await plays(page)).toBe(0);
   });
 
-  test('a released drag clacks at the snap, and a drag that springs back stays quiet', async ({ page }) => {
+  test('a released drag clacks exactly once, at the snap, and a drag that springs back stays quiet (mocked time)', async ({ page }) => {
     await spyOnSound(page);
-    await waitForWake(page);
-    await dragTo(page, 0, 15);
-    await page.mouse.up();
-    await expect.poll(() => angleOf(page)).toBe(0);
+    await waitForWakeMocked(page);
+    await dragTo(page, 0, 15, true, { x: 0, y: 0 }, tick32); // short of the 30 degree threshold
+    await runFor(page, 1500); // the spring-back, 260 ms x speed, with room to spare
+    expect(await angleOf(page)).toBe(0);
+    await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
     expect(await plays(page)).toBe(0);
-    await dragTo(page, 0, 50);
-    await page.mouse.up();
+
+    await dragTo(page, 0, 50, true, { x: 0, y: 0 }, tick32); // past the threshold: released, the swing runs
+    expect(await plays(page)).toBe(0); // the clack is at the stop, not at the release
+    await runFor(page, 3000);
     await expect(stage(page)).toHaveAttribute('data-phase', 'open');
+    expect(await angleOf(page)).toBe(180);
     expect(await plays(page)).toBe(1);
+    await runFor(page, 5000);
+    expect(await plays(page)).toBe(1); // and nothing else rings
   });
 
   test('the mute toggle silences it and the choice survives a reload', async ({ page }) => {

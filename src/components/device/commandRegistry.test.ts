@@ -8,4 +8,9 @@ describe('command registry', () => {
     expect(resolveCommand('now')).toEqual({ type: 'app', app: 'notes' });
     expect(resolveCommand('notes')).toEqual({ type: 'app', app: 'notes' });
   });
+
+  it('has a close command, listed in help', () => {
+    expect(resolveCommand('close')).toEqual({ type: 'close' });
+    expect(availableCommands).toContain('close');
+  });
 });

@@ -21,9 +21,10 @@ interface PhoneDeviceProps {
   onBootStart: () => void;
   onBootCard: () => void;
   onReboot: () => void;
+  onCloseLid: () => void;
 }
 
-export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function PhoneDevice({ ready, phase, onOpenRequest, boot, bootReducedMotion, onBootStart, onBootCard, onReboot }, ref) {
+export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function PhoneDevice({ ready, phase, onOpenRequest, boot, bootReducedMotion, onBootStart, onBootCard, onReboot, onCloseLid }, ref) {
   const compareDevice = import.meta.env.DEV && new URLSearchParams(window.location.search).get('compareDevice') === '1';
   const showKeyMap = import.meta.env.DEV && new URLSearchParams(window.location.search).get('showKeyMap') === '1';
   const comparisonReference = import.meta.env.DEV ? '/src/assets/device/source/sidekickI.png' : '';
@@ -44,6 +45,7 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
     bootActive: boot !== 'off',
     onBootStart,
     onReboot,
+    onCloseLid,
   });
 
   const sideways = useLandscapePhone();

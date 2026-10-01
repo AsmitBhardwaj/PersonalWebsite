@@ -36,6 +36,10 @@ Apps render inside `.app-host`, which is clipped to the screen (the bottom 14% i
 
 ### Input
 
+## The closed lid
+
+While the device sits closed and untouched the lid nudges open about 7° and springs back (silently) after 3 s, again every 6 s, at most 3 times; any pointer or key interaction cancels the nudge and restarts the wait. A visitor who has never opened it gets a silent auto-open at 12 s, which continues into the normal boot or home flow. The `close` terminal command (home screen only) runs the reverse swivel with the clack. Reduced motion has no nudge. Timings are in `SWIVEL.idle` (`swivelConfig.ts`), scheduling in `idleNudge.ts`. Playwright drives these with mocked time (`page.clock`, see the helpers in `tests/swivel.spec.ts`), never real waits.
+
 ## First-visit boot
 
 After the swivel opens for a first-time visitor, the screen plays a ~2 s boot (backlight, AsmitOS splash), then holds the Platter card on a 240x160 canvas scaled with nearest-neighbour. The card never advances by itself: the visitor presses the pixel Start button (click or tap), Enter, or the trackball or D-pad centre, and the screen hands off to home through the redraw dim. Other keys and taps elsewhere on the card do nothing; a tap on the App Store line opens the link. Reduced motion shows the same card and Start button with no animation. The `localStorage` key `sidekick:booted` is set when Start is pressed, so a visitor who leaves on the card sees it again; the `reboot` command replays it. `PLATTER_APP_STORE_STATUS` also drives the Platter status line on the Projects page. Timings, copy, palette and the `PLATTER_APPLE_ID` / `PLATTER_APP_STORE_STATUS` ('live' | 'coming_soon') constants are in `src/boot/bootConfig.ts`. Playwright runs every test as a returning visitor (see `playwright.config.ts`) except `tests/boot.spec.ts`, and silently: specs import `test` from `tests/fixtures.ts`, which sets the `sidekick:muted` flag before page scripts run (opt out with `test.use({ muted: false })`), and Chromium launches with `--mute-audio`.
