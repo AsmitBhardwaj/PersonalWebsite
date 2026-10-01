@@ -68,7 +68,8 @@ test('coordinate clicks type, edit, shift, and execute a command', async ({ page
   await expect(page.getByRole('heading', { name: 'Platter' })).toBeVisible();
 });
 
-test('commands, aliases, unknown input, and physical keyboard share behavior', async ({ page }) => {
+test('commands, aliases, unknown input, and physical keyboard share behavior', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'The hardware terminal belongs to the desktop device, not the in-device phone layout.');
   await openPhone(page);
   await page.keyboard.type('about');
   await page.keyboard.press('Enter');
@@ -85,7 +86,8 @@ test('commands, aliases, unknown input, and physical keyboard share behavior', a
   await expect(page.getByRole('heading', { name: 'Platter' })).toBeVisible();
 });
 
-test('D-pad, trackball, call, and back controls route the existing screen', async ({ page }) => {
+test('D-pad, trackball, call, and back controls route the existing screen', async ({ page, isMobile }) => {
+  test.skip(isMobile, 'The hardware controls belong to the desktop device, not the in-device phone layout.');
   await openPhone(page);
   await clickHardware(page, 'dpad-right');
   await expect(page.getByRole('button', { name: 'Open Projects' })).toHaveAttribute('aria-current', 'true');

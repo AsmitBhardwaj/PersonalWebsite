@@ -146,7 +146,8 @@ for (const viewport of [{ width: 1440, height: 900 }, { width: 1280, height: 720
   test.describe(`camera zoom at ${viewport.width}x${viewport.height}`, () => {
     test.use({ viewport });
 
-    test('reading apps zoom the device, text is 16px+, page does not scroll, Escape zooms out', async ({ page }) => {
+    test('reading apps zoom the device, text is 16px+, page does not scroll, Escape zooms out', async ({ page, isMobile }) => {
+      test.skip(isMobile, 'The desktop camera zoom is not used on a touch phone, and mobile WebKit has no mouse wheel.');
       await openApp(page, 'Projects');
       await expect(stage(page)).toHaveAttribute('data-zoom', 'on');
       await expect(stage(page)).not.toHaveAttribute('data-focus', /.*/);
@@ -255,6 +256,7 @@ test.describe('sideways phone', () => {
   });
 
   test('reading apps are unaffected when sideways', async ({ page }) => {
+    await page.goto('/'); // Firefox hangs on a viewport resize before the first navigation
     await page.setViewportSize({ width: 844, height: 390 });
     await openApp(page, 'Projects');
     await expect(stage(page)).toHaveAttribute('data-focus', 'on');

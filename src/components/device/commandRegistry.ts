@@ -26,7 +26,9 @@ const aliases: Record<string, string> = {
   ls: 'help',
 };
 
-export const availableCommands = Object.keys(commands);
+/** Names shown by `help`: an app is listed by its label (so "now", not "notes"); its id still resolves. */
+const appLabelById = new Map(apps.map((app) => [app.id, app.label.toLowerCase()]));
+export const availableCommands = Object.keys(commands).map((name) => appLabelById.get(name) ?? name);
 
 export function resolveCommand(input: string): CommandDestination | null {
   const normalized = input.trim().toLowerCase();

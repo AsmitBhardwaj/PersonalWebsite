@@ -157,14 +157,15 @@ test.describe('opening the device', () => {
 
   test('a drag past 30 degrees completes the swivel, short of it springs back closed', async ({ page }) => {
     await waitForWake(page);
-    await dragTo(page, 0, 20);
+    // Hold the pointer down while reading: after release the lid springs back, and a slower browser reads it mid-flight.
+    await dragTo(page, 0, 20, false);
     expect(await angleOf(page)).toBeGreaterThan(18);
     expect(await angleOf(page)).toBeLessThan(22);
     await page.mouse.up();
     await expect(stage(page)).toHaveAttribute('data-phase', 'wake');
     await expect.poll(() => angleOf(page)).toBe(0);
 
-    await dragTo(page, 0, 45);
+    await dragTo(page, 0, 45, false);
     expect(await angleOf(page)).toBeGreaterThan(43);
     await page.mouse.up();
     await expect(stage(page)).toHaveAttribute('data-phase', 'open');
@@ -355,21 +356,26 @@ test.describe('reduced motion', () => {
 test.describe('small screens', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true });
 
-  test('the swivel runs in-device on a phone and a touch drag opens it', async ({ page }) => {
+  test('the swivel runs in-device on a phone and a touch drag opens it', async ({ page, browserName }) => {
     await waitForWake(page);
     expect(await stage(page).getAttribute('data-focus')).toBeNull();
     const box = await lid(page).boundingBox();
     if (!box) throw new Error('no lid');
-    const client = await page.context().newCDPSession(page);
-    const point = (x: number, y: number) => [{ x, y, id: 1 }];
-    // Drag the lid up and over: touch events along the hinge arc of a short drag past 30 degrees.
-    const start = await lidPoint(page, 0);
-    await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: point(start.x, start.y) });
-    for (let i = 1; i <= 8; i++) {
-      const p = await lidPoint(page, 45 * i / 8);
-      await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: point(p.x, p.y) });
+    if (browserName === 'chromium') {
+      const client = await page.context().newCDPSession(page);
+      const point = (x: number, y: number) => [{ x, y, id: 1 }];
+      // Drag the lid up and over: touch events along the hinge arc of a short drag past 30 degrees.
+      const start = await lidPoint(page, 0);
+      await client.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: point(start.x, start.y) });
+      for (let i = 1; i <= 8; i++) {
+        const p = await lidPoint(page, 45 * i / 8);
+        await client.send('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: point(p.x, p.y) });
+      }
+      await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
+    } else {
+      // CDP touch dispatch is Chromium-only and Playwright's touchscreen can only tap, so the other engines drag with the mouse.
+      await dragTo(page, 0, 45);
     }
-    await client.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] });
     await expect(stage(page)).toHaveAttribute('data-phase', 'open');
     expect(await angleOf(page)).toBe(180);
     expect(await stage(page).getAttribute('data-focus')).toBeNull();

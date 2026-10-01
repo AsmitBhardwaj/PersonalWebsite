@@ -16,6 +16,7 @@ export interface ExperienceItem {
   role: string;
   company: string;
   period: string;
+  location?: string;
   highlights: string[];
   technologies: string[];
 }
@@ -30,34 +31,47 @@ export interface Note {
 export interface PortfolioContent {
   name: string;
   statusName: string;
-  biography: string;
-  currentFocus: string;
+  /** Optional large heading for About. Falls back to the name. */
+  headline?: string;
+  /** One entry per paragraph. */
+  biography: string[];
+  currentFocus?: string;
   location: string;
   email: string;
   social: { github: string; linkedin: string };
-  technologies: string[];
+  skillGroups: { label: string; items: string[] }[];
   interests: string[];
   projects: Project[];
   experience: ExperienceItem[];
+  /** Optional line shown above the Now list. */
+  notesIntro?: string;
   notes: Note[];
   music: { title: string; artist: string; note: string };
   wallpaperPath: string;
-  resumePath: string;
 }
 
 /** Replace placeholder copy and URLs here; UI components read exclusively from this object. */
 export const portfolio: PortfolioContent = {
   name: 'Asmit Bhardwaj',
   statusName: 'Asmit',
-  biography: 'I\u2019m a Computer Science student at Gettysburg College (class of 2028), minoring in Mathematics and Economics. I build products, and I treat every internship and project as founder training. I taught myself to code on my first laptop, an old HP, and I haven\u2019t stopped since. On campus I\u2019m President of Sangam (100+ members) and Secretary of ACM.',
-  currentFocus: 'Right now that means Platter, an iOS app I built solo that turns recipe Reels, TikToks and blog posts into clean, cookable recipes, with pantry-aware suggestions and budget meal planning.',
-  location: 'Your city · Available worldwide',
+  headline: 'Hi, I\u2019m Asmit.',
+  biography: [
+    'I\u2019m a Computer Science student at Gettysburg College (class of 2028), minoring in Mathematics and Economics. I build products, and I treat every internship and project as founder training.',
+    'Right now that means Platter, an iOS app I built solo that turns recipe Reels, TikToks and blog posts into clean, cookable recipes, with pantry-aware suggestions and budget meal planning.',
+    'I taught myself to code on my first laptop, an old HP, and I haven\u2019t stopped since.',
+    'On campus I\u2019m President of Sangam (100+ members) and Secretary of ACM.',
+  ],
+  location: 'Gettysburg, PA',
   email: 'bharas01@gettysburg.edu',
   social: {
     github: 'https://github.com/AsmitBhardwaj',
     linkedin: 'https://linkedin.com/in/asmitbhardwaj',
   },
-  technologies: ['Swift', 'Python', 'TypeScript/React', 'Java', 'JavaScript', 'SQL', 'FastAPI', 'SwiftUI', 'pandas', 'NumPy', 'scikit-learn', 'Claude Code', 'GitHub Copilot', 'Git'],
+  skillGroups: [
+    { label: 'Languages', items: ['Swift', 'Python', 'TypeScript/React', 'Java', 'JavaScript', 'SQL'] },
+    { label: 'Frameworks & libraries', items: ['FastAPI', 'SwiftUI', 'pandas', 'NumPy', 'scikit-learn'] },
+    { label: 'Tools', items: ['Claude Code', 'GitHub Copilot', 'Git'] },
+  ],
   interests: ['Marathon running', 'FC Barcelona (lifelong)', 'Cricket', 'Football analytics'],
   projects: [
     {
@@ -97,12 +111,12 @@ export const portfolio: PortfolioContent = {
   ],
   experience: [
     {
-      role: 'AI Engineering Intern', company: 'Tech Mahindra Americas \u00b7 Plano, TX (Hybrid)', period: 'May 2026 \u2013 Present',
+      role: 'AI Engineering Intern', company: 'Tech Mahindra Americas', period: 'May 2026 \u2013 Present', location: 'Plano, TX (Hybrid)',
       highlights: [
         'Built a Python benchmarking suite evaluating Gurobi against commercial and open-source solvers (CPLEX, FICO Xpress, HiGHS, OR-Tools), with reproducible test harnesses across MIPLIB and ROADEF benchmark datasets.',
         'Modeled and solved a Capacitated Vehicle Routing Problem in Gurobi, independently validating correctness and test coverage.',
       ],
-      technologies: [],
+      technologies: ['Python', 'Gurobi', 'CPLEX', 'OR-Tools'],
     },
     {
       role: 'Web Development Intern', company: 'Gettysburg College', period: 'Jan 2026 \u2013 May 2026',
@@ -114,15 +128,16 @@ export const portfolio: PortfolioContent = {
       technologies: [],
     },
     {
-      role: 'Research Assistant', company: 'AIMI, Stanford University \u00b7 Remote', period: 'Aug 2024 \u2013 Dec 2024',
+      role: 'Research Assistant', company: 'AIMI, Stanford University', period: 'Aug 2024 \u2013 Dec 2024', location: 'Remote',
       highlights: [
         'Built Python data pipelines (pandas, NumPy, scikit-learn) analyzing glaucoma and ophthalmological disease prevalence in patient data from India.',
         'Applied clustering and trend detection to identify temporal disease progression patterns, supporting epidemiological hypothesis validation.',
         'Shared findings through visualizations and reports with public health and clinical teams at eye hospitals in India.',
       ],
-      technologies: [],
+      technologies: ['Python', 'pandas', 'NumPy', 'scikit-learn'],
     },
   ],
+  notesIntro: 'What I\u2019m doing right now.',
   notes: [
     { title: 'AI engineering at Tech Mahindra Americas', date: '', excerpt: 'Optimization solvers and vehicle routing.', body: 'AI engineering internship at Tech Mahindra Americas: optimization solvers and vehicle routing.' },
     { title: 'Shipping Platter v1.0, building v1.1', date: '', excerpt: 'Nutrition, budget meal planning and a smarter grocery list.', body: 'Shipping Platter v1.0 to the App Store and building v1.1: nutrition, budget meal planning and a smarter grocery list.' },
@@ -130,5 +145,4 @@ export const portfolio: PortfolioContent = {
   ],
   music: { title: 'Night Transit', artist: 'Placeholder Artist', note: 'Replace title and artist in src/content/portfolio.ts. Audio does not autoplay.' },
   wallpaperPath: '/assets/wallpaper/winter-photo.png',
-  resumePath: '/resume-placeholder.pdf',
 };
