@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { SWIVEL } from '../src/components/device/swivelConfig';
 
 const stage = (page: Page) => page.locator('.device-stage');
 const lid = (page: Page) => page.locator('.display-assembly');
@@ -87,7 +88,7 @@ test.describe('opening the device', () => {
     await expect(stage(page)).toHaveAttribute('data-phase', 'open');
   });
 
-  test('the swing is 400-450 ms with an overshoot of about 3 degrees that settles back', async ({ page }) => {
+  test('the swing takes the configured time with an overshoot of about 3 degrees that settles back', async ({ page }) => {
     await waitForWake(page);
     await page.evaluate(() => {
       const lidEl = document.querySelector<HTMLElement>('.display-assembly')!;
@@ -109,8 +110,9 @@ test.describe('opening the device', () => {
     expect(peak).toBeLessThanOrEqual(183.01);
     const first = moving[0];
     const atPeak = moving.find((s) => s.a === peak)!;
-    expect(atPeak.t - first.t).toBeGreaterThan(330);
-    expect(atPeak.t - first.t).toBeLessThan(560);
+    // Peak arrives after the configured swing time (frame-quantised), well before the settle and redraw finish.
+    expect(atPeak.t - first.t).toBeGreaterThan(SWIVEL.swing.durationMs * 0.75);
+    expect(atPeak.t - first.t).toBeLessThan(SWIVEL.swing.durationMs * 1.3);
     expect(moving[moving.length - 1].a).toBe(180);
   });
 

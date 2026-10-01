@@ -1,4 +1,12 @@
 /**
+ * Playback speed of the whole swivel as a divisor of time: 1.5 plays the same motion 1.5x slower. It scales every duration
+ * below that is written with `slow()` (swing, settle, spring-back, recoil, redraw dim). Shadow, lift and glare are driven by
+ * the screen angle, so they stretch with the swing automatically. Curves and angles are untouched.
+ */
+export const SWIVEL_SPEED = 1.5;
+const slow = (baseMs: number) => baseMs * SWIVEL_SPEED;
+
+/**
  * Every tuning value for the screen swivel lives here. Angles are degrees, durations are milliseconds,
  * lengths are CSS px or a percentage of the screen layer, as named.
  *
@@ -18,11 +26,11 @@ export const SWIVEL = {
   },
 
   swing: {
-    /** Time to reach the overshoot peak. The settle below is on top of this. */
-    durationMs: 430,
+    /** Time to reach the overshoot peak (430 ms at speed 1). The settle below is on top of this. */
+    durationMs: slow(430),
     /** Degrees past the rest pose the swing travels before settling back. */
     overshootDeg: 3,
-    settleMs: 120,
+    settleMs: slow(120),
     /**
      * Cubic bezier controls (x1, y1, x2, y2) for the velocity profile, fed to GSAP CustomEase. Over the full travel this
      * gives a slow thumb push (~125 ms for the first 15 deg), a hard pull through the middle with peak speed at ~92 deg,
@@ -30,7 +38,7 @@ export const SWIVEL = {
      */
     easeControls: [0.75, 0, 0.25, 1] as const,
     /** Spring back to rest after a drag released short of the threshold. */
-    springBackMs: 260,
+    springBackMs: slow(260),
     springBackOvershoot: 1.6,
   },
 
@@ -44,8 +52,8 @@ export const SWIVEL = {
   recoil: {
     /** The device body kicks opposite to the swing at the stop. */
     distancePx: 1.5,
-    hitMs: 25,
-    settleMs: 100,
+    hitMs: slow(25),
+    settleMs: slow(100),
   },
 
   lift: {
@@ -97,13 +105,13 @@ export const SWIVEL = {
   /** The display re-orienting after the swivel, like an OS rotating its UI. The lock-to-home swap happens inside the dim. */
   redraw: {
     dimLevel: 0.04,
-    dimInMs: 25,
+    dimInMs: slow(25),
     /** Total time held near-black, including `dimInMs`. */
-    dimMs: 80,
-    fadeInMs: 260,
+    dimMs: slow(80),
+    fadeInMs: slow(260),
   },
 
-  /** Short crossfade used instead of motion when the visitor prefers reduced motion. */
+  /** Short crossfade used instead of motion when the visitor prefers reduced motion. Not scaled: it replaces the swivel rather than being part of it. */
   reducedFadeMs: 150,
 
   sound: {

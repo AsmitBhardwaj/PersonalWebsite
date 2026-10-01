@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SWIVEL } from './swivelConfig';
+import { SWIVEL, SWIVEL_SPEED } from './swivelConfig';
 import {
   SWING_TRAVEL, angleAtDistance, distanceAtAngle, glareTransform, glassWorldRotation, poseAt, recoilDirection, shouldComplete,
   swivelEase, timeAtDistance,
@@ -9,12 +9,22 @@ const SIZE = { w: 786, h: 510 };
 const sampleSpeeds = (steps = 2000) => Array.from({ length: steps }, (_, i) => (swivelEase((i + 1) / steps) - swivelEase(i / steps)) * steps);
 
 describe('swing velocity profile', () => {
-  it('runs 400-450 ms with a 3 degree overshoot and a ~120 ms settle', () => {
-    expect(SWIVEL.swing.durationMs).toBeGreaterThanOrEqual(400);
-    expect(SWIVEL.swing.durationMs).toBeLessThanOrEqual(450);
+  it('runs the base 430 ms swing slowed by SWIVEL_SPEED, with a 3 degree overshoot and a matching settle', () => {
+    expect(SWIVEL.swing.durationMs).toBeCloseTo(430 * SWIVEL_SPEED, 6);
+    expect(SWIVEL.swing.settleMs).toBeCloseTo(120 * SWIVEL_SPEED, 6);
     expect(SWIVEL.swing.overshootDeg).toBe(3);
-    expect(SWIVEL.swing.settleMs).toBeCloseTo(120, -1);
     expect(SWING_TRAVEL).toBe(183);
+  });
+
+  it('scales every timed part by the same factor and leaves angles alone', () => {
+    expect(SWIVEL.recoil.hitMs).toBeCloseTo(25 * SWIVEL_SPEED, 6);
+    expect(SWIVEL.recoil.settleMs).toBeCloseTo(100 * SWIVEL_SPEED, 6);
+    expect(SWIVEL.swing.springBackMs).toBeCloseTo(260 * SWIVEL_SPEED, 6);
+    expect(SWIVEL.redraw.dimMs).toBeCloseTo(80 * SWIVEL_SPEED, 6);
+    expect(SWIVEL.redraw.dimInMs).toBeCloseTo(25 * SWIVEL_SPEED, 6);
+    expect(SWIVEL.redraw.fadeInMs).toBeCloseTo(260 * SWIVEL_SPEED, 6);
+    expect(SWIVEL.swing.overshootDeg).toBe(3);
+    expect(SWIVEL.drag.releaseThresholdDeg).toBe(30);
   });
 
   it('starts and ends at rest', () => {
@@ -24,7 +34,7 @@ describe('swing velocity profile', () => {
 
   it('spends a quarter or more of the swing on the first 15 degrees (the thumb push)', () => {
     expect(timeAtDistance(15)).toBeGreaterThan(0.25);
-    expect(timeAtDistance(15) * SWIVEL.swing.durationMs).toBeGreaterThan(100);
+    expect(timeAtDistance(15) * SWIVEL.swing.durationMs).toBeGreaterThan(100 * SWIVEL_SPEED);
   });
 
   it('peaks in speed around 90 degrees and is faster there than at the start or the stop', () => {
