@@ -53,7 +53,7 @@ test('coordinate clicks type, edit, shift, and execute a command', async ({ page
   await page.keyboard.press('Escape');
   await page.keyboard.type('projects');
   await clickHardware(page, 'key-enter');
-  await expect(page.getByText('Signal Garden')).toBeVisible();
+  await expect(page.getByText('Platter')).toBeVisible();
 });
 
 test('commands, aliases, unknown input, and physical keyboard share behavior', async ({ page }) => {
@@ -70,7 +70,7 @@ test('commands, aliases, unknown input, and physical keyboard share behavior', a
   await expect(page.locator('.hardware-terminal__feedback')).toHaveText('Command not found. Type help.');
   await page.keyboard.type('proj');
   await page.keyboard.press('Enter');
-  await expect(page.getByText('Signal Garden')).toBeVisible();
+  await expect(page.getByText('Platter')).toBeVisible();
 });
 
 test('D-pad, trackball, call, and back controls route the existing screen', async ({ page }) => {
@@ -202,7 +202,7 @@ test('while an app is open the terminal stays closed and back/Escape close the a
   await openPhone(page);
   await clickHardware(page, 'dpad-right');
   await clickHardware(page, 'dpad-center');
-  await expect(page.getByText('Sample project 1 / 3')).toBeVisible();
+  await expect(page.getByText('Project 1 / 1')).toBeVisible();
   await page.keyboard.type('abc');
   await page.keyboard.press('Alt+KeyA');
   await clickHardware(page, 'key-alt');

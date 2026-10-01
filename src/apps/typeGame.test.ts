@@ -100,9 +100,15 @@ describe('lives and spawning', () => {
 });
 
 describe('word pool', () => {
-  it('is lowercase letters only and includes project names from the portfolio data', () => {
-    const pool = buildWordPool(['Signal Garden', 'Next.js 2']);
+  it('is lowercase letters only and joins project names into one word', () => {
+    const pool = buildWordPool(['Open Lane', 'Next.js 2']);
     expect(pool.every((w) => /^[a-z]+$/.test(w))).toBe(true);
-    expect(pool).toEqual(expect.arrayContaining(['signal', 'garden', 'next', 'js', 'mutex']));
+    expect(pool).toEqual(expect.arrayContaining(['openlane', 'nextjs', 'mutex']));
+    expect(pool).not.toContain('open');
+  });
+  it('works with a single project and with the portfolio data', () => {
+    expect(buildWordPool(['Platter'])).toContain('platter');
+    expect(buildWordPool()).toContain('platter');
+    expect(buildWordPool([])).toContain('mutex');
   });
 });

@@ -56,28 +56,12 @@ export const portfolio: PortfolioContent = {
   interests: ['Product craft', 'Creative coding', 'Photography', 'Music'],
   projects: [
     {
-      title: 'Signal Garden',
-      summary: 'Sample project — an ambient workspace that turns complex activity into a calm, glanceable visual system.',
-      technologies: ['React', 'TypeScript', 'WebGL'],
-      sourceUrl: 'https://github.com/',
-      demoUrl: 'https://example.com/',
-      accent: '#85a8c4',
-    },
-    {
-      title: 'Pocket Atlas',
-      summary: 'Sample project — a beautifully focused travel journal for saving places, routes, and small discoveries.',
-      technologies: ['Swift', 'MapKit', 'CloudKit'],
-      sourceUrl: 'https://github.com/',
-      demoUrl: 'https://example.com/',
+      title: 'Platter',
+      summary: 'Save recipes from Instagram, TikTok and food blogs, then cook with what you\u2019ve already got.',
+      technologies: ['SwiftUI', 'Swift', 'Python', 'FastAPI', 'PostgreSQL', 'OpenAI', 'Railway', 'StoreKit'],
+      sourceUrl: '',
+      demoUrl: 'https://platterapp.tech',
       accent: '#d08a5b',
-    },
-    {
-      title: 'Common Thread',
-      summary: 'Sample project — a collaborative archive that helps small teams connect decisions to the work they shaped.',
-      technologies: ['Next.js', 'Postgres', 'Node.js'],
-      sourceUrl: 'https://github.com/',
-      demoUrl: 'https://example.com/',
-      accent: '#769b82',
     },
   ],
   experience: [
