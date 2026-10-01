@@ -1,27 +1,44 @@
-import { useEffect, useState } from 'react';
-import { portfolio } from '../../content/portfolio';
+import { useEffect, useRef, useState } from 'react';
+import '@fontsource/silkscreen/400.css';
+import { CANVAS } from '../../boot/bootConfig';
+import { FONT_FAMILY } from '../../boot/bootRender';
+import { createLockRenderer, lockFace } from '../../boot/lockRender';
 
-const TICK_MS = 15_000;
-const clock = () => new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-const day = () => new Date().toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+const TICK_MS = 1000;
 
 /**
- * The dim screen of the shut device. The lid is turned half a turn when closed, so the content is turned back to read upright
- * there, and it keeps turning with the lid during a swivel (see `.lock-screen` in screen.css). It is swapped out for the home
- * screen inside the redraw dim at the end of an opening swivel.
+ * The dim screen of the shut device, drawn like the boot screens: a 240x160 pixel canvas scaled with nearest-neighbour.
+ * The lid is turned half a turn when closed, so the content is turned back to read upright there, and it keeps turning
+ * with the lid during a swivel (see `.lock-screen` in screen.css). It is swapped out for the home screen inside the
+ * redraw dim at the end of an opening swivel.
  */
 export function LockScreen({ on }: { on: boolean }) {
-  const [now, setNow] = useState(() => ({ time: clock(), day: day() }));
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [face, setFace] = useState(() => lockFace());
+
   useEffect(() => {
     if (!on) return;
-    const update = () => setNow({ time: clock(), day: day() });
+    const update = () => setFace((current) => { const next = lockFace(); return next.time === current.time && next.date === current.date ? current : next; });
     update();
     const id = window.setInterval(update, TICK_MS);
     return () => window.clearInterval(id);
   }, [on]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const renderer = createLockRenderer(canvas);
+    renderer?.draw(face);
+    // Redraw once the pixel font arrives, so the first frame is never in a fallback face.
+    let live = true;
+    void document.fonts?.load(`8px ${FONT_FAMILY}`).then(() => document.fonts.load(`16px ${FONT_FAMILY}`)).then(() => { if (live) renderer?.draw(face); });
+    return () => { live = false; };
+  }, [face]);
+
   return <div className="lock-screen" data-on={on} aria-hidden="true">
-    <time className="lock-screen__time">{now.time}</time>
-    <span className="lock-screen__day">{now.day}</span>
-    <b className="lock-screen__name">{portfolio.statusName}</b>
+    <div className="lock-screen__lcd">
+      <canvas ref={canvasRef} className="lock-screen__canvas" width={CANVAS.width} height={CANVAS.height}/>
+    </div>
+    <span className="lock-screen__sr">{face.time} {face.date}</span>
   </div>;
 }

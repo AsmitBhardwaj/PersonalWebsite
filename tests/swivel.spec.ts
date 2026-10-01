@@ -286,10 +286,33 @@ test.describe('closed state', () => {
     expect(closed.lid).toBe(0);
     expect(Math.abs(closed.face + closed.lock) % 360).toBe(0);
     expect(closed.faceOpacity).toBe('');
-    expect(closed.lockText).toMatch(/Asmit/i);
-    expect(closed.lockText).toMatch(/\d{1,2}[:.]\d{2}/);
+    expect(closed.lockText).not.toMatch(/asmit/i);
+    expect(closed.lockText).toMatch(/\d{1,2}:\d{2} [AP]M [A-Z]{3} [A-Z]{3} \d{1,2}/);
     await expect(page.locator('.glass-glare')).toHaveCount(1);
     await expect(page.locator('.open-prompt')).toBeVisible();
+  });
+
+  test('the lock screen is drawn like the boot: a 240x160 pixel canvas, flat palette, hard edges, no anti-aliasing', async ({ page }) => {
+    await waitForWake(page);
+    await page.waitForTimeout(400);
+    const canvas = page.locator('.lock-screen canvas');
+    await expect(canvas).toHaveCSS('image-rendering', /pixelated|crisp-edges/);
+    const out = await canvas.evaluate((el) => {
+      const c = el as HTMLCanvasElement;
+      const { data } = c.getContext('2d')!.getImageData(0, 0, c.width, c.height);
+      const colours = new Map<string, number>();
+      for (let i = 0; i < data.length; i += 4) { const key = [...data.slice(i, i + 4)].map((n) => n.toString(16).padStart(2, '0')).join(''); colours.set(key, (colours.get(key) ?? 0) + 1); }
+      const px = (x: number, y: number) => { const i = (y * c.width + x) * 4; return [...data.slice(i, i + 3)].map((n) => n.toString(16).padStart(2, '0')).join(''); };
+      return { size: [c.width, c.height], colours: [...colours.keys()], top: px(100, 3), softkey: px(10, 154), body: px(10, 32), scan: px(10, 31) };
+    });
+    expect(out.size).toEqual([240, 160]);
+    // Only the flat palette: background, scanline, status bar black, rules, text and sprite colours. Anti-aliasing would add dozens of shades.
+    expect(out.colours.length).toBeLessThanOrEqual(10);
+    expect(out.top).toBe('000000'); // status bar
+    expect(out.softkey).toBe('35514f'); // softkey bar, the boot's "dim"
+    expect(out.body).toBe('0e1a1b'); // flat backlit background
+    expect(out.scan).toBe('0b1516'); // 1px scanline on alternate rows
+    await expect(page.locator('.lock-screen')).not.toContainText(/asmit/i);
   });
 
   test('the lid sits flush over the keyboard area with the side controls still visible', async ({ page }) => {

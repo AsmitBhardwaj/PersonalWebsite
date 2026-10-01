@@ -62,20 +62,17 @@
 @media (prefers-reduced-motion:reduce) { .type-pop, .type-overlay p { animation:none; } }
 /* First-visit boot: a 240x160 canvas scaled with nearest-neighbour, letterboxed to its 3:2 ratio inside the screen layer. */
 .boot-seq { position:absolute; inset:0; z-index:30; display:grid; place-items:center; container-type:size; background:#000; }
-.boot-seq__lcd { position:relative; width:min(100cqw,150cqh); aspect-ratio:3/2; }
-.boot-seq__canvas { display:block; width:100%; height:100%; image-rendering:crisp-edges; image-rendering:pixelated; }
+.boot-seq__lcd, .lock-screen__lcd { position:relative; width:min(100cqw,150cqh); aspect-ratio:3/2; }
+.boot-seq__canvas, .lock-screen__canvas { display:block; width:100%; height:100%; image-rendering:crisp-edges; image-rendering:pixelated; }
 .boot-seq__link { position:absolute; display:block; cursor:pointer; }
 .boot-seq__start { position:absolute; display:block; margin:0; padding:0; border:0; background:transparent; cursor:pointer; }
 .boot-seq__start:focus-visible { outline:2px solid #f1e8d0; outline-offset:2px; }
 .boot-seq__link:focus-visible { outline:2px solid #f1e8d0; outline-offset:1px; }
-.boot-seq__sr { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
+.boot-seq__sr, .lock-screen__sr { position:absolute; width:1px; height:1px; margin:-1px; overflow:hidden; clip:rect(0 0 0 0); white-space:nowrap; }
 .project-meta a{color:inherit;text-decoration:underline;text-underline-offset:2px}
 .snake-wrap { position:relative; display:flex; flex:1; min-height:0; background:#0a141a; }
 .snake-field { position:relative; flex:1; display:flex; align-items:center; justify-content:center; overflow:hidden; touch-action:none; user-select:none; -webkit-user-select:none; }
 .snake-field canvas { display:block; flex:none; image-rendering:pixelated; }
-/* Lock screen of the shut device. Turned 180deg against the lid so it reads upright when closed; it rotates with the lid until the swap to home. */
-.lock-screen { position:absolute; inset:0; z-index:1; display:none; flex-direction:column; align-items:center; justify-content:center; gap:.5em; transform:rotate(180deg); color:#d7e6ec; background:radial-gradient(ellipse at 50% 40%,#1b2c34,#0a1217 72%); font-family:Arial,sans-serif; text-shadow:0 1px 2px #000; }
-.lock-screen[data-on='true'] { display:flex; }
-.lock-screen__time { font-size:4.2em; font-weight:700; letter-spacing:.02em; opacity:.82; }
-.lock-screen__day { font-size:1.15em; opacity:.55; }
-.lock-screen__name { margin-top:1.1em; font-size:1.5em; font-weight:700; letter-spacing:.24em; text-transform:uppercase; opacity:.62; }
+/* Lock screen of the shut device: a pixel canvas like the boot (see .boot-seq). Turned 180deg against the lid so it reads upright when closed; it rotates with the lid until the swap to home. */
+.lock-screen { position:absolute; inset:0; z-index:1; display:none; place-items:center; container-type:size; transform:rotate(180deg); background:#000; }
+.lock-screen[data-on='true'] { display:grid; }

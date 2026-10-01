@@ -5,20 +5,21 @@ const { palette: C } = BOOT;
 export const FONT_FAMILY = 'Silkscreen';
 const FONT_SIZE = { small: 8, large: 16 } as const;
 type Size = keyof typeof FONT_SIZE;
-type Align = 'left' | 'center';
+type Align = 'left' | 'center' | 'right';
 
 /** Hard-edged text: drawn to a scratch canvas, then every pixel is snapped to fully on or fully off. No anti-aliasing. */
-function createText(scratch: HTMLCanvasElement) {
+export function createText(scratch: HTMLCanvasElement) {
   const sctx = scratch.getContext('2d', { willReadFrequently: true });
   const font = (size: Size) => `${FONT_SIZE[size]}px ${FONT_FAMILY}, monospace`;
 
-  function width(text: string, size: Size): number {
-    if (!sctx) return text.length * FONT_SIZE[size];
+  function width(text: string, size: Size, scale = 1): number {
+    if (!sctx) return text.length * FONT_SIZE[size] * scale;
     sctx.font = font(size);
-    return Math.ceil(sctx.measureText(text).width);
+    return Math.ceil(sctx.measureText(text).width) * scale;
   }
 
-  function draw(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: Size, color: string, align: Align = 'left') {
+  /** `scale` enlarges the glyphs by a whole number of pixels (nearest-neighbour), for big blocky digits. */
+  function draw(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: Size, color: string, align: Align = 'left', scale = 1) {
     if (!sctx || !text) return;
     const w = width(text, size);
     const h = FONT_SIZE[size] + 2;
@@ -35,13 +36,15 @@ function createText(scratch: HTMLCanvasElement) {
     sctx.fillStyle = color;
     sctx.fillRect(0, 0, scratch.width, scratch.height);
     sctx.globalCompositeOperation = 'source-over';
-    ctx.drawImage(scratch, Math.round(align === 'center' ? x - w / 2 : x), Math.round(y));
+    const left = align === 'center' ? x - (w * scale) / 2 : align === 'right' ? x - w * scale : x;
+    ctx.imageSmoothingEnabled = false;
+    ctx.drawImage(scratch, Math.round(left), Math.round(y), scratch.width * scale, scratch.height * scale);
   }
 
   return { width, draw };
 }
 
-const rect = (ctx: CanvasRenderingContext2D, color: string, x: number, y: number, w: number, h: number) => {
+export const rect = (ctx: CanvasRenderingContext2D, color: string, x: number, y: number, w: number, h: number) => {
   ctx.fillStyle = color;
   ctx.fillRect(x, y, w, h);
 };
