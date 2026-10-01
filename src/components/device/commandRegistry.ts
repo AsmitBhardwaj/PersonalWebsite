@@ -6,7 +6,8 @@ export type CommandDestination =
   | { type: 'external'; destination: 'github' | 'linkedin' | 'email' }
   | { type: 'home' }
   | { type: 'help' }
-  | { type: 'clear' };
+  | { type: 'clear' }
+  | { type: 'reboot' };
 
 const commands: Record<string, CommandDestination> = {
   ...Object.fromEntries(apps.filter((app) => !app.hidden).map((app) => [app.id, { type: 'app', app: app.id } as CommandDestination])),
@@ -16,6 +17,7 @@ const commands: Record<string, CommandDestination> = {
   home: { type: 'home' },
   help: { type: 'help' },
   clear: { type: 'clear' },
+  reboot: { type: 'reboot' },
 };
 
 const aliases: Record<string, string> = {

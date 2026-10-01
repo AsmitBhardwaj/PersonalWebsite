@@ -10,9 +10,21 @@ import { useHardwareKeyboard } from './useHardwareKeyboard';
 
 export type IntroPhase = 'closed' | 'wake' | 'swivel' | 'mid-swivel' | 'enter' | 'open';
 
-interface PhoneDeviceProps { ready: boolean; booting: boolean; phase: IntroPhase; onOpenRequest: () => void; }
+export type BootState = 'off' | 'pending' | 'playing';
 
-export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function PhoneDevice({ ready, booting, phase, onOpenRequest }, ref) {
+interface PhoneDeviceProps {
+  ready: boolean;
+  booting: boolean;
+  phase: IntroPhase;
+  onOpenRequest: () => void;
+  boot: BootState;
+  bootReducedMotion: boolean;
+  onBootSkip: () => void;
+  onBootFinish: () => void;
+  onReboot: () => void;
+}
+
+export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function PhoneDevice({ ready, booting, phase, onOpenRequest, boot, bootReducedMotion, onBootSkip, onBootFinish, onReboot }, ref) {
   const compareDevice = import.meta.env.DEV && new URLSearchParams(window.location.search).get('compareDevice') === '1';
   const showKeyMap = import.meta.env.DEV && new URLSearchParams(window.location.search).get('showKeyMap') === '1';
   const comparisonReference = import.meta.env.DEV ? '/src/assets/device/source/sidekickI.png' : '';
@@ -30,6 +42,9 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
     goHome,
     highlightedIndex,
     setHighlightedIndex,
+    bootActive: boot !== 'off',
+    onBootSkip,
+    onReboot,
   });
 
   const sideways = useLandscapePhone();
@@ -61,6 +76,10 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
         closeTerminal={hardware.closeTerminal}
         lidOpenable={phase === 'closed' || phase === 'wake'}
         onOpenRequest={onOpenRequest}
+        boot={boot}
+        bootReducedMotion={bootReducedMotion}
+        onBootSkip={onBootSkip}
+        onBootFinish={onBootFinish}
       />
     </section>
     <HardwareControlsOverlay

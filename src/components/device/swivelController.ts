@@ -16,6 +16,8 @@ export interface SwivelHooks {
   onContent: (face: Face) => void;
   /** A visitor-driven open is about to start. The page uses it to finish its wake-up animation first. */
   onBeforeOpen?: () => void;
+  /** The redraw dim has finished fading back in on `face`. */
+  onRedrawEnd?: (face: Face) => void;
 }
 
 export interface SwivelController {
@@ -25,6 +27,8 @@ export interface SwivelController {
   close: (options?: { user?: boolean }) => void;
   /** Snaps straight to a rest pose with no animation. `announce` reports the phase to the page. */
   jumpTo: (rest: Rest, announce?: boolean) => void;
+  /** Runs `swap` inside the display-redraw dim, then `onEnd` once the display has faded back in. Both run at once if the swivel is mid-motion. */
+  handoff: (swap: () => void, onEnd?: () => void) => void;
   destroy: () => void;
 }
 
@@ -136,13 +140,14 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   }
 
   /** The display going near-black and coming back with the other face, like an OS re-orienting. */
-  function redraw(face: Face): gsap.core.Timeline {
-    return gsap.timeline()
+  function dimThrough(swap: () => void, onEnd?: () => void): gsap.core.Timeline {
+    return gsap.timeline({ onComplete: onEnd })
       .to(viewport, { opacity: REDRAW.dimLevel, duration: seconds(REDRAW.dimInMs), ease: 'power1.in' })
-      .call(() => swapContent(face))
+      .call(swap)
       .to(viewport, { opacity: REDRAW.dimLevel, duration: seconds(REDRAW.dimMs - REDRAW.dimInMs) })
       .to(viewport, { opacity: 1, duration: seconds(REDRAW.fadeInMs), ease: 'power2.out', clearProps: 'opacity' });
   }
+  const redraw = (face: Face) => dimThrough(() => swapContent(face), () => hooks.onRedrawEnd?.(face));
 
   /** A short kick of the whole device body, opposite to the swing, easing back. */
   function recoil(direction: number): gsap.core.Timeline {
@@ -324,6 +329,10 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
       drag = null;
       settleAt(next, announce ? (next === 'open' ? 'open' : 'wake') : null);
       if (next === 'open') swapContent('home');
+    },
+    handoff(swap, onEnd) {
+      if (busy) { swap(); onEnd?.(); return; }
+      track(dimThrough(swap, onEnd));
     },
     destroy() {
       stopAll();

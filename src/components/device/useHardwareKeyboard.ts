@@ -76,6 +76,10 @@ interface UseHardwareKeyboardOptions {
   goHome: () => void;
   highlightedIndex: number | null;
   setHighlightedIndex: (index: number | null) => void;
+  /** The boot sequence owns the screen: keys do nothing here, and an on-screen control press skips it. */
+  bootActive: boolean;
+  onBootSkip: () => void;
+  onReboot: () => void;
 }
 
 function isEditableTarget(target: EventTarget | null) {
@@ -89,14 +93,14 @@ type Source = 'keyboard' | 'screen';
  * The single input dispatcher. Physical keys and on-screen controls both become a HardwareControl + phase,
  * then are routed to exactly one owner: the open app, otherwise the home screen (highlight + terminal).
  */
-export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex }: UseHardwareKeyboardOptions) {
+export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, bootActive, onBootSkip, onReboot }: UseHardwareKeyboardOptions) {
   const [terminal, dispatch] = useReducer(terminalReducer, initialTerminal);
   const [pressedIds, setPressedIds] = useState<ReadonlySet<string>>(() => new Set());
   const [bus] = useState(createInputBus);
   const litAt = useRef(new Map<string, number>());
 
-  const latest = useRef({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal });
-  useEffect(() => { latest.current = { enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal }; });
+  const latest = useRef({ enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal, bootActive, onBootSkip, onReboot });
+  useEffect(() => { latest.current = { enabled, activeApp, openApp, goHome, highlightedIndex, setHighlightedIndex, terminal, bootActive, onBootSkip, onReboot }; });
 
   const light = useCallback((id: string) => {
     if (!litAt.current.has(id)) litAt.current.set(id, performance.now());
@@ -139,6 +143,9 @@ export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highl
         dispatch({ type: 'feedback', feedback: availableCommands.join(' · '), clearBuffer: true });
       } else if (destination.type === 'clear') {
         dispatch({ type: 'clear' });
+      } else if (destination.type === 'reboot') {
+        dispatch({ type: 'close' });
+        s.onReboot();
       } else {
         if (destination.destination === 'github') window.open(portfolio.social.github, '_blank', 'noopener,noreferrer');
         if (destination.destination === 'linkedin') window.open(portfolio.social.linkedin, '_blank', 'noopener,noreferrer');
@@ -174,7 +181,7 @@ export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highl
   /** The routing decision: one owner per event. */
   const route = useCallback((control: HardwareControl, phase: Phase, repeat: boolean, source: Source) => {
     const s = latest.current;
-    if (!s.enabled) return;
+    if (!s.enabled || s.bootActive) return;
     if (s.activeApp) {
       // An app owns all input: the terminal and home screen never see it.
       if (control.action === 'back') { if (phase === 'down' && !repeat) s.goHome(); return; }
@@ -189,7 +196,7 @@ export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highl
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (!enabled || event.metaKey || event.ctrlKey || event.altKey) return;
-      if (event.target instanceof HTMLElement && event.target.closest('.hardware-control')) return;
+      if (event.target instanceof HTMLElement && event.target.closest('.hardware-control, [data-boot-link]')) return;
       const controlId = physicalKeyToControlId(event.key);
       const control = controlId ? hardwareControlById.get(controlId) : undefined;
       if (!controlId || !control) return;
@@ -237,6 +244,7 @@ export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highl
     /** On-screen click. Home handles it here; an app already got pointer down/up, except for keyboard-triggered clicks (detail 0). */
     activateControl: useCallback((control: HardwareControl, fromKeyboard = false) => {
       if (!latest.current.enabled) return;
+      if (latest.current.bootActive) { latest.current.onBootSkip(); return; }
       if (latest.current.activeApp) {
         if (fromKeyboard) { route(control, 'down', false, 'screen'); route(control, 'up', false, 'screen'); }
         return;

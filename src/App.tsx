@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { PhoneDevice, type IntroPhase } from './components/device/PhoneDevice';
+import { PhoneDevice, type BootState, type IntroPhase } from './components/device/PhoneDevice';
 import { createSwivel, type SwivelController } from './components/device/swivelController';
 import { SoundToggle } from './components/ui/SoundToggle';
 import { preloadClack } from './audio/clack';
+import { hasBooted, markBooted } from './boot/bootSeen';
 import './styles/device.css';
 import './styles/screen.css';
 import './styles/focus.css';
@@ -12,6 +13,8 @@ import './styles/hardware-controls.css';
 import './styles/hardware-terminal.css';
 
 gsap.registerPlugin(useGSAP);
+
+const prefersReducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 export default function App() {
   const stageRef = useRef<HTMLDivElement>(null);
@@ -21,9 +24,39 @@ export default function App() {
   const [booting, setBooting] = useState(false);
   const [introActive, setIntroActive] = useState(true);
   const [introPhase, setIntroPhase] = useState<IntroPhase>('closed');
+  const [boot, setBootState] = useState<BootState>('off');
+  const bootRef = useRef<BootState>('off');
+  /** The first-visit boot follows an opening swivel, not a skipped intro. */
+  const allowBootRef = useRef(true);
+  const handoffRef = useRef(false);
+  const [reducedMotion] = useState(prefersReducedMotion);
+
+  const setBoot = useCallback((next: BootState) => { bootRef.current = next; setBootState(next); }, []);
+  /** The display has finished redrawing: the boot screen, lit but black until now, starts its clock. */
+  const startBootClock = useCallback(() => { if (bootRef.current === 'pending') setBoot('playing'); }, [setBoot]);
+
+  /** Boot is over (it ran out, or a key, tap or trackball press skipped it): back to home through the redraw dim. */
+  const endBoot = useCallback(() => {
+    if (bootRef.current === 'off' || handoffRef.current) return;
+    const swivel = swivelRef.current;
+    if (bootRef.current === 'playing' && swivel && !prefersReducedMotion()) {
+      handoffRef.current = true;
+      swivel.handoff(() => { handoffRef.current = false; setBoot('off'); });
+    } else setBoot('off');
+  }, [setBoot]);
+
+  /** The `reboot` command: dim into the boot screen and play the sequence again. */
+  const reboot = useCallback(() => {
+    if (bootRef.current !== 'off' || handoffRef.current) return;
+    const swivel = swivelRef.current;
+    if (swivel && !prefersReducedMotion()) {
+      handoffRef.current = true;
+      swivel.handoff(() => { handoffRef.current = false; setBoot('pending'); }, startBootClock);
+    } else setBoot('playing');
+  }, [setBoot, startBootClock]);
 
   /** Skip: straight to the open pose with no animation and no sound. */
-  const finishIntro = useCallback(() => {
+  const finishIntro = useCallback((withBoot = false) => {
     const stage = stageRef.current;
     if (!stage) return;
     timelineRef.current?.kill();
@@ -31,7 +64,9 @@ export default function App() {
     gsap.set(stage.querySelector('.notification-led'), { opacity: 0.62, boxShadow: '0 0 5px #8fc8ee' });
     gsap.set(stage.querySelector('.ambient-shadow'), { opacity: 0.78, scaleX: 1.04 });
     setBooting(false); setReady(true); setIntroActive(false);
+    allowBootRef.current = withBoot;
     swivelRef.current?.jumpTo('open');
+    allowBootRef.current = true;
   }, []);
 
   /** A visitor asked for the lid to open (click, tap, Enter or Space). A drag reaches the same swivel on its own. */
@@ -46,14 +81,20 @@ export default function App() {
     if (!stage) return;
     const swivel = createSwivel(stage, {
       onPhase: (phase) => { setIntroPhase(phase); if (phase === 'open') setIntroActive(false); },
-      onContent: (face) => { setReady(face === 'home'); if (face === 'home') setBooting(false); },
+      onContent: (face) => {
+        setReady(face === 'home');
+        if (face === 'home') {
+          setBooting(false);
+          if (allowBootRef.current && !hasBooted()) { markBooted(); setBoot(prefersReducedMotion() ? 'playing' : 'pending'); }
+        } else { handoffRef.current = false; setBoot('off'); }
+      },
+      onRedrawEnd: (face) => { if (face === 'home') startBootClock(); },
       onBeforeOpen: () => timelineRef.current?.totalProgress(1, false),
     });
     swivelRef.current = swivel;
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (reduced) {
+    if (prefersReducedMotion()) {
       gsap.set(stage, { opacity: 0 });
-      finishIntro();
+      finishIntro(true);
       gsap.to(stage, { opacity: 1, duration: 0.15 });
       return () => { swivel.destroy(); swivelRef.current = null; };
     }
@@ -103,10 +144,10 @@ export default function App() {
   return <main className="portfolio-stage">
     <a className="skip-link" href="#phone">Skip to portfolio</a>
     <div className="studio-light" aria-hidden="true"/>
-    <div id="phone" className="device-wrap"><PhoneDevice ref={stageRef} ready={ready} booting={booting} phase={introPhase} onOpenRequest={requestOpen}/></div>
+    <div id="phone" className="device-wrap"><PhoneDevice ref={stageRef} ready={ready} booting={booting} phase={introPhase} onOpenRequest={requestOpen} boot={boot} bootReducedMotion={reducedMotion} onBootSkip={endBoot} onBootFinish={endBoot} onReboot={reboot}/></div>
     {/* Device-level controls. Music controls are meant to join the sound toggle here. */}
     <div className="device-controls"><SoundToggle/></div>
-    {introActive && <button className="skip-intro" onClick={finishIntro}>Skip intro</button>}
+    {introActive && <button className="skip-intro" onClick={() => finishIntro()}>Skip intro</button>}
     {introPhase === 'open'
       ? <div className="depth-hint" aria-hidden="true"><span/>Explore inside the device</div>
       : introPhase === 'wake' && <button type="button" className="open-prompt" onClick={requestOpen}><i aria-hidden="true"/>Tap, drag or press Enter to open</button>}

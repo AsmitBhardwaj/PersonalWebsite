@@ -4,16 +4,18 @@ import { useHardwareKeyboard } from '../components/device/useHardwareKeyboard';
 import { hardwareControlById } from '../components/device/hardwareControlMap';
 import type { AppKeyEvent } from './inputBus';
 
-function setup(initialApp: string | null) {
+function setup(initialApp: string | null, bootActive = false) {
   const openApp = vi.fn();
   const goHome = vi.fn();
   const setHighlightedIndex = vi.fn();
+  const onBootSkip = vi.fn();
+  const onReboot = vi.fn();
   const hook = renderHook((props: { activeApp: string | null; highlightedIndex?: number | null }) => useHardwareKeyboard({
-    enabled: true, activeApp: props.activeApp, openApp, goHome, highlightedIndex: props.highlightedIndex ?? null, setHighlightedIndex,
+    enabled: true, activeApp: props.activeApp, openApp, goHome, highlightedIndex: props.highlightedIndex ?? null, setHighlightedIndex, bootActive, onBootSkip, onReboot,
   }), { initialProps: { activeApp: initialApp } as { activeApp: string | null; highlightedIndex?: number | null } });
   const events: AppKeyEvent[] = [];
   hook.result.current.bus.input.subscribe((event) => events.push(event));
-  return { hook, openApp, goHome, setHighlightedIndex, events };
+  return { hook, openApp, goHome, setHighlightedIndex, events, onBootSkip, onReboot };
 }
 
 const press = (key: string, target: Window | Element = window) => fireEvent.keyDown(target, { key });
@@ -21,6 +23,23 @@ const press = (key: string, target: Window | Element = window) => fireEvent.keyD
 afterEach(() => { document.body.innerHTML = ''; });
 
 describe('central input dispatcher', () => {
+  it('runs reboot from the terminal', () => {
+    const { hook, onReboot } = setup(null);
+    [...'reboot', 'Enter'].forEach((key) => press(key));
+    expect(onReboot).toHaveBeenCalledTimes(1);
+    expect(hook.result.current.terminal.open).toBe(false);
+  });
+
+  it('leaves the keyboard alone while the boot sequence plays, and skips it from an on-screen control', () => {
+    const { hook, onBootSkip, setHighlightedIndex } = setup(null, true);
+    ['a', 'ArrowRight', 'Enter'].forEach((key) => press(key));
+    expect(hook.result.current.terminal.open).toBe(false);
+    expect(setHighlightedIndex).not.toHaveBeenCalled();
+    act(() => hook.result.current.activateControl(hardwareControlById.get('dpad-center')!));
+    expect(onBootSkip).toHaveBeenCalledTimes(1);
+    expect(setHighlightedIndex).not.toHaveBeenCalled();
+  });
+
   it('opens the terminal from the home screen', () => {
     const { hook } = setup(null);
     press('a');

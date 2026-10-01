@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import { PhoneScreen } from './PhoneScreen';
+import type { BootState } from './PhoneDevice';
 import { TouchKeyboard, type TouchKeyboardProps } from './TouchKeyboard';
 import type { AppId } from '../../apps/types';
 import type { InputBus } from '../../input/inputBus';
@@ -25,9 +26,13 @@ interface DisplayAssemblyProps {
   /** The lid is shut and awake, so a keyboard user can open it. */
   lidOpenable: boolean;
   onOpenRequest: () => void;
+  boot: BootState;
+  bootReducedMotion: boolean;
+  onBootSkip: () => void;
+  onBootFinish: () => void;
 }
 
-export function DisplayAssembly({ ready, booting, activeApp, focused, needsRotate, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, lidOpenable, onOpenRequest }: DisplayAssemblyProps) {
+export function DisplayAssembly({ ready, booting, activeApp, focused, needsRotate, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, lidOpenable, onOpenRequest, boot, bootReducedMotion, onBootSkip, onBootFinish }: DisplayAssemblyProps) {
   return <>
     <div className="contact-shadow" aria-hidden="true"/>
     <div className="motion-ghost" aria-hidden="true">
@@ -48,7 +53,7 @@ export function DisplayAssembly({ ready, booting, activeApp, focused, needsRotat
       <div className="display-front-face">
         <span className="lid-grip" aria-hidden="true"/>
         <div className="screen-shell" ref={shellRef}>
-          <PhoneScreen ready={ready} booting={booting} navigation={{ activeApp, focused, needsRotate, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal }}/>
+          <PhoneScreen ready={ready} booting={booting} navigation={{ activeApp, focused, needsRotate, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, boot, bootReducedMotion, onBootSkip, onBootFinish }}/>
           {touchKeys && <TouchKeyboard {...touchKeys}/>}
           <div className="glass-reflection" aria-hidden="true"/>
           <div className="glass-glare" aria-hidden="true"><i/></div>

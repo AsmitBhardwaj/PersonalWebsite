@@ -9,6 +9,8 @@ import { AppIcon } from '../ui/AppIcon';
 import { DockButton } from '../ui/DockButton';
 import { RotatePrompt } from './RotatePrompt';
 import { HardwareTerminal } from './HardwareTerminal';
+import { BootSequence } from '../../boot/BootSequence';
+import type { BootState } from './PhoneDevice';
 import type { HardwareTerminalState } from './useHardwareKeyboard';
 
 // The now-playing widget is parked until the music player ships. Flip this to bring it back.
@@ -24,7 +26,13 @@ interface PhoneScreenNavigation {
   closeTerminal: () => void;
   focused?: boolean;
   needsRotate?: boolean;
+  boot?: BootState;
+  bootReducedMotion?: boolean;
+  onBootSkip?: () => void;
+  onBootFinish?: () => void;
 }
+
+const noop = () => undefined;
 
 interface PhoneScreenProps { ready: boolean; booting: boolean; navigation?: PhoneScreenNavigation; }
 
@@ -54,6 +62,7 @@ export function PhoneScreen({ ready, booting, navigation }: PhoneScreenProps) {
       {app && <nav className="screen-nav" aria-label="Phone navigation"><button onClick={home} aria-label="Back to phone home"><ChevronLeft/><span>Back</span></button><b>{app.label}</b><button onClick={home} aria-label="Phone home"><Home/><span>Home</span></button></nav>}
       {navigation && <HardwareTerminal terminal={navigation.terminal} onClose={navigation.closeTerminal}/>}
     </div>
+    {navigation?.boot && navigation.boot !== 'off' && <BootSequence active={navigation.boot === 'playing'} reducedMotion={navigation.bootReducedMotion ?? false} onSkip={navigation.onBootSkip ?? noop} onFinish={navigation.onBootFinish ?? noop}/>}
   </div>;
 }
 

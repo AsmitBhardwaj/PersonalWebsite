@@ -36,6 +36,10 @@ Apps render inside `.app-host`, which is clipped to the screen (the bottom 14% i
 
 ### Input
 
+## First-visit boot
+
+After the swivel opens for a first-time visitor, the screen plays a ~4 s boot (backlight, AsmitOS splash, Platter card) on a 240x160 canvas scaled with nearest-neighbour, then hands off to home through the redraw dim. Any key, tap or trackball press skips it; a tap on the App Store line opens the link instead. It plays once (`localStorage` key `sidekick:booted`); the `reboot` command replays it. Timings, copy, palette and the `PLATTER_APPLE_ID` / `PLATTER_APP_STORE_STATUS` ('live' | 'coming_soon') constants are in `src/boot/bootConfig.ts`. Playwright runs every test as a returning visitor (see `playwright.config.ts`) except `tests/boot.spec.ts`.
+
 All input goes through one dispatcher (`src/components/device/useHardwareKeyboard.ts`). Physical keys and on-screen keys produce the same events. While an app is open only that app receives them; the home screen and terminal ignore them, and Back/Escape close the app (the app never sees Escape). The D-pad sends arrow keys, trackball centre and D-pad centre send `Enter`.
 
 ```tsx
