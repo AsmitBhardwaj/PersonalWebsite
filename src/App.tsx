@@ -4,6 +4,7 @@ import { useGSAP } from '@gsap/react';
 import { PhoneDevice, type IntroPhase } from './components/device/PhoneDevice';
 import './styles/device.css';
 import './styles/screen.css';
+import './styles/focus.css';
 import './styles/hardware-controls.css';
 import './styles/hardware-terminal.css';
 

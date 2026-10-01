@@ -1,8 +1,9 @@
-import { forwardRef, useState } from 'react';
+import { forwardRef, useRef, useState } from 'react';
 import type { AppId } from '../../apps/types';
 import { DeviceBase, GroundShadow } from './DeviceBase';
 import { DisplayAssembly } from './DisplayAssembly';
 import { HardwareControlsOverlay } from './HardwareControlsOverlay';
+import { useFocusMode } from './useFocusMode';
 import { useHardwareKeyboard } from './useHardwareKeyboard';
 
 export type IntroPhase = 'closed' | 'wake' | 'swivel' | 'mid-swivel' | 'enter' | 'open';
@@ -16,7 +17,8 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
   const [activeApp, setActiveApp] = useState<AppId | null>(null);
   const [highlightedIndex, setHighlightedIndex] = useState<number | null>(null);
   const hardwareEnabled = phase === 'open';
-  const goHome = () => setActiveApp(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+  const { focused, requestHome: goHome } = useFocusMode({ shellRef, enabled: hardwareEnabled, activeApp, closeApp: () => setActiveApp(null) });
   const hardware = useHardwareKeyboard({
     enabled: hardwareEnabled,
     activeApp,
@@ -34,6 +36,8 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
         ready={ready}
         booting={booting}
         activeApp={activeApp}
+        focused={focused}
+        shellRef={shellRef}
         highlightedIndex={highlightedIndex}
         terminal={hardware.terminal}
         bus={hardware.bus}

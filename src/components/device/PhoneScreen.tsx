@@ -21,6 +21,7 @@ interface PhoneScreenNavigation {
   openApp: (app: AppId) => void;
   goHome: () => void;
   closeTerminal: () => void;
+  focused?: boolean;
 }
 
 interface PhoneScreenProps { ready: boolean; booting: boolean; navigation?: PhoneScreenNavigation; }
@@ -45,7 +46,7 @@ export function PhoneScreen({ ready, booting, navigation }: PhoneScreenProps) {
     <div className={`phone-os ${ready ? 'is-ready' : ''}`} style={{ backgroundImage: `url(${portfolio.wallpaperPath})` }}>
       <header className="status-bar"><span><i className="signal-bars"/>{portfolio.statusName}</span><span><Wifi size={11}/><time>10:21</time><i className="battery"/></span></header>
       <main className={`screen-content ${app ? 'has-app' : ''}`}>
-        {!app ? <HomeScreen openApp={openApp} highlightedIndex={navigation?.highlightedIndex ?? null}/> : <AppHost key={app.id} app={app} bus={bus} close={home}/>}
+        {!app ? <HomeScreen openApp={openApp} highlightedIndex={navigation?.highlightedIndex ?? null}/> : <AppHost key={app.id} app={app} bus={bus} close={home} focused={navigation?.focused ?? false}/>}
       </main>
       {app && <nav className="screen-nav" aria-label="Phone navigation"><button onClick={home} aria-label="Back to phone home"><ChevronLeft/><span>Back</span></button><b>{app.label}</b><button onClick={home} aria-label="Phone home"><Home/><span>Home</span></button></nav>}
       {navigation && <HardwareTerminal terminal={navigation.terminal} onClose={navigation.closeTerminal}/>}

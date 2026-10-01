@@ -2,10 +2,10 @@ import { useEffect, useState } from 'react';
 import type { InputBus } from '../input/inputBus';
 import type { AppDefinition } from './types';
 
-interface AppHostProps { app: AppDefinition; bus: InputBus; close: () => void; }
+interface AppHostProps { app: AppDefinition; bus: InputBus; close: () => void; focused?: boolean; }
 
 /** Renders one app inside the screen bounds and drives its lifecycle. */
-export function AppHost({ app, bus, close }: AppHostProps) {
+export function AppHost({ app, bus, close, focused = false }: AppHostProps) {
   const [paused, setPaused] = useState(() => document.hidden);
   const Component = app.component;
 
@@ -23,5 +23,5 @@ export function AppHost({ app, bus, close }: AppHostProps) {
     };
   }, [app, bus]);
 
-  return <div className="app-host" data-app={app.id}><Component input={bus.input} paused={paused} close={close}/></div>;
+  return <div className="app-host" data-app={app.id}><Component input={bus.input} paused={paused} focused={focused} close={close}/></div>;
 }

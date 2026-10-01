@@ -1,0 +1,31 @@
+/* Focus mode: on small screens an open app grows out of the device to fill the viewport (see useFocusMode).
+   Layout vars below feed the status bar, nav bar and game HUD so chrome keeps a usable size. */
+html.is-focus-mode, html.is-focus-mode body { overflow: hidden; overscroll-behavior: none; }
+html.is-focus-mode .depth-hint, html.is-focus-mode .skip-intro { display: none; }
+
+.device-stage[data-focus] { --focus-bezel: 8px; --status-h: 28px; --nav-h: 56px; --hud-h: 44px; }
+@media (max-height: 480px) { .device-stage[data-focus] { --focus-bezel: 6px; --status-h: 24px; --nav-h: 46px; --hud-h: 36px; } }
+
+.display-front-frame { transition: opacity .3s ease; }
+.device-stage[data-focus='enter'] .display-front-frame, .device-stage[data-focus='on'] .display-front-frame { opacity: 0; }
+.device-stage[data-focus] .glass-reflection, .device-stage[data-focus='enter'] .hardware-controls-overlay, .device-stage[data-focus='on'] .hardware-controls-overlay { display: none; }
+
+/* Slim Sidekick-style bezel. During the grow/shrink tween the width comes from --bezel. */
+.device-stage[data-focus] .screen-shell { z-index: 4; border: solid #20282c; border-color: #323d43 #1a2125 #12181b #1a2125; border-width: var(--bezel, 0); border-radius: 0; box-shadow: none; }
+.device-stage[data-focus='on'] .screen-shell { border-width: var(--focus-bezel); }
+.device-stage[data-focus] .screen-viewport { border-radius: 10px; font-size: 18px; }
+.device-stage[data-focus] .status-bar { font-size: .72em; }
+
+.device-stage[data-focus] .screen-nav button { min-height: 36px; padding: 0 .9em; font-size: .8em; }
+.device-stage[data-focus] .screen-nav b { font-size: .85em; }
+.device-stage[data-focus] .screen-page { padding: 14px 16px; }
+.device-stage[data-focus] .scroll-page { padding-bottom: 16px; }
+
+/* Body text stays at 14px or more effective (18px base). Small labels get a floor of .78em. */
+.device-stage[data-focus] :is(.timeline ul, .location, .project-meta, .project-links a, .contact-social a, .copy-button, .inline-back, .notes-list time, .timeline-meta, .timeline .company) { font-size: .82em; }
+.device-stage[data-focus] .tags span { font-size: .78em; }
+.device-stage[data-focus] .project-pager button { width: 2.4em; }
+.device-stage[data-focus] .projects-page .project-scroll { padding-inline: 16px; }
+.device-stage[data-focus] .project-bar { margin-inline: -16px; padding-inline: 16px; }
+.device-stage[data-focus] .project-pager { padding: .35em 16px; }
+@media (max-height: 480px) { .device-stage[data-focus] .project-art { height: 4.5em; } .device-stage[data-focus] .project-pager button { width: 2.2em; } }

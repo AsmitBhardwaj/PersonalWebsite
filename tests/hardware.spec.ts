@@ -127,7 +127,9 @@ for (const viewport of [
     await expect(page.getByRole('button', { name: 'Open Projects' })).toHaveAttribute('aria-current', 'true');
     await clickHardware(page, 'control-call');
     await expect(page.getByText('Open channel')).toBeVisible();
-    await clickHardware(page, 'control-back');
+    // Both sizes are small enough for focus mode, which covers the device, so the on-screen Back replaces the hardware one.
+    await expect(page.locator('.device-stage')).toHaveAttribute('data-focus', 'on');
+    await page.getByRole('button', { name: 'Back to phone home' }).click();
     await expect(page.getByRole('button', { name: 'Open Projects' })).toBeVisible();
   });
 }

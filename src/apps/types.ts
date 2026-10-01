@@ -9,6 +9,11 @@ export interface AppProps {
   input: AppInput;
   /** True while the page is hidden. Games should pause timers and animation frames. */
   paused: boolean;
+  /**
+   * True while the screen fills the viewport (small screens). The play field or layout area changes size on
+   * entering and exiting, so games should size from their container, not from constants.
+   */
+  focused: boolean;
   /** Close this app and return to the home screen. */
   close: () => void;
 }
