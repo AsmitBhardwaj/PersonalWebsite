@@ -7,3 +7,4 @@ test-results
 *.tsbuildinfo
 public/photos
 src/content/photos.generated.json
+.DS_Store

@@ -1,5 +1,6 @@
 {
-  "placeholder-1.jpg": { "caption": "Sample photo. Drop your own images in photos-src/ and these disappear.", "date": "2026-09", "place": "Somewhere warm" },
-  "placeholder-2.jpg": { "caption": "Portrait crop, to show how tall photos sit in the grid.", "date": "2026-08" },
-  "placeholder-3.jpg": {}
+  "2.jpeg": { "caption": "Strapping in for a day on the slopes." },
+  "1.jpeg": { "caption": "Head of security. Currently off duty." },
+  "3.jpeg": { "caption": "Fresh out of the oven. Recipe testing for Platter, obviously." },
+  "4.jpeg": { "caption": "The team at YCP Hacks.", "place": "York, PA" }
 }

@@ -16,10 +16,14 @@ const METADATA_CHUNKS = new Set(['EXIF', 'XMP ', 'ICCP']);
 
 const isPlaceholder = (file) => file.toLowerCase().startsWith(PLACEHOLDER_PREFIX);
 
-/** Decode a source file to an upright pixel buffer sharp can read. HEIC needs a JS decoder: prebuilt sharp has no HEVC. */
+/** HEIF brands that need the JS decoder. Detected from the bytes: an iPhone HEIC renamed to .jpeg is still HEIC. */
+const HEIC_BRANDS = new Set(['heic', 'heix', 'hevc', 'hevx', 'heim', 'heis', 'hevm', 'hevs', 'mif1', 'msf1']);
+const isHeic = (bytes, file) => (bytes.length > 12 && bytes.toString('ascii', 4, 8) === 'ftyp' && HEIC_BRANDS.has(bytes.toString('ascii', 8, 12))) || HEIC_EXTENSIONS.has(path.extname(file).toLowerCase());
+
+/** Decode a source file to something sharp can read. HEIC needs a JS decoder: prebuilt sharp has no HEVC. */
 async function readSource(file) {
   const bytes = await readFile(file);
-  if (!HEIC_EXTENSIONS.has(path.extname(file).toLowerCase())) return bytes;
+  if (!isHeic(bytes, file)) return bytes;
   const { default: convert } = await import('heic-convert');
   return Buffer.from(await convert({ buffer: bytes, format: 'JPEG', quality: 0.95 }));
 }
