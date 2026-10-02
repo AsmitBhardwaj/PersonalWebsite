@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
-import '@fontsource/silkscreen/400.css';
+import '@fontsource/pixelify-sans/400.css';
 import { CANVAS } from '../../boot/bootConfig';
-import { FONT_FAMILY } from '../../boot/bootRender';
+import { FONT_LOADS } from '../../boot/bootRender';
 import { createLockRenderer, lockFace, type LockRenderer } from '../../boot/lockRender';
 import { SWIVEL } from './swivelConfig';
 
@@ -13,7 +13,7 @@ const prefersReducedMotion = () => typeof window.matchMedia === 'function' && wi
 export type LockRing = 'off' | 'idle' | 'awake';
 
 /**
- * The dim screen of the shut device, drawn like the boot screens: a 240x160 pixel canvas scaled with nearest-neighbour.
+ * The dim screen of the shut device, drawn like the boot screens: a 480x320 pixel canvas scaled with nearest-neighbour.
  * The lid is turned half a turn when closed, so the content is turned back to read upright there, and it keeps turning
  * with the lid during a swivel (see `.lock-screen` in screen.css). It is swapped out for the home screen inside the
  * redraw dim at the end of an opening swivel.
@@ -54,7 +54,7 @@ export function LockScreen({ on, ring = 'off' }: { on: boolean; ring?: LockRing 
     renderer?.draw(face, notice);
     // Redraw once the pixel font arrives, so the first frame is never in a fallback face.
     let live = true;
-    void document.fonts?.load(`8px ${FONT_FAMILY}`).then(() => document.fonts.load(`16px ${FONT_FAMILY}`)).then(() => { if (live) renderer?.draw(face, notice); });
+    void Promise.all(FONT_LOADS.map((font) => document.fonts?.load(font))).then(() => { if (live) renderer?.draw(face, notice); });
     return () => { live = false; };
   }, [face, notice?.slide]); // eslint-disable-line react-hooks/exhaustive-deps -- the notice text is constant
 

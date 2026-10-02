@@ -338,7 +338,7 @@ test.describe('closed state', () => {
     await expect(page.locator('.open-prompt')).toBeVisible();
   });
 
-  test('the lock screen is drawn like the boot: a 240x160 pixel canvas, flat palette, hard edges, no anti-aliasing', async ({ page }) => {
+  test('the lock screen is drawn like the boot: a 480x320 pixel canvas, flat palette, hard edges, no anti-aliasing', async ({ page }) => {
     await waitForWake(page);
     await page.waitForTimeout(400);
     const canvas = page.locator('.lock-screen canvas');
@@ -349,15 +349,15 @@ test.describe('closed state', () => {
       const colours = new Map<string, number>();
       for (let i = 0; i < data.length; i += 4) { const key = [...data.slice(i, i + 4)].map((n) => n.toString(16).padStart(2, '0')).join(''); colours.set(key, (colours.get(key) ?? 0) + 1); }
       const px = (x: number, y: number) => { const i = (y * c.width + x) * 4; return [...data.slice(i, i + 3)].map((n) => n.toString(16).padStart(2, '0')).join(''); };
-      return { size: [c.width, c.height], colours: [...colours.keys()], top: px(100, 3), softkey: px(10, 154), body: px(10, 32), scan: px(10, 31) };
+      return { size: [c.width, c.height], colours: [...colours.keys()], top: px(200, 4), softkey: px(10, 316), body: px(10, 64), scan: px(10, 66) };
     });
-    expect(out.size).toEqual([240, 160]);
+    expect(out.size).toEqual([480, 320]);
     // Only the flat palette: background, scanline, status bar black, rules, text and sprite colours. Anti-aliasing would add dozens of shades.
     expect(out.colours.length).toBeLessThanOrEqual(10);
     expect(out.top).toBe('000000'); // status bar
     expect(out.softkey).toBe('35514f'); // softkey bar, the boot's "dim"
     expect(out.body).toBe('0e1a1b'); // flat backlit background
-    expect(out.scan).toBe('0b1516'); // 1px scanline on alternate rows
+    expect(out.scan).toBe('0b1516'); // 2px scanlines on alternate row pairs
     await expect(page.locator('.lock-screen')).not.toContainText(/asmit/i);
   });
 

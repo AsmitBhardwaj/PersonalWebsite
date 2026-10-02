@@ -6,7 +6,7 @@ import { LockScreen } from './LockScreen';
 import { SWIVEL } from './swivelConfig';
 
 describe('LockScreen', () => {
-  it('is a 240x160 pixel canvas that shares the boot canvas styling, with the live time and date as text for tests and readers', () => {
+  it('is a 480x320 pixel canvas that shares the boot canvas styling, with the live time and date as text for tests and readers', () => {
     const { container } = render(<LockScreen on/>);
     const lock = container.querySelector('.lock-screen')!;
     expect(lock).toHaveAttribute('data-on', 'true');

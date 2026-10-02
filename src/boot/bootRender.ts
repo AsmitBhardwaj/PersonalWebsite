@@ -2,27 +2,33 @@ import { BOOT, CANVAS, LINK_RECT, PLATTER_TAGLINE, START_RECT } from './bootConf
 import type { BootScene } from './bootScene';
 
 const { palette: C } = BOOT;
-export const FONT_FAMILY = 'Silkscreen';
-const FONT_SIZE = { small: 8, large: 16 } as const;
-type Size = keyof typeof FONT_SIZE;
+export const FONT_FAMILY = 'Pixelify Sans';
+/** One pixel face at three native sizes, never scaled up: small labels, titles, and the lock-screen clock. */
+const FONT = {
+  small: { family: FONT_FAMILY, px: 16, weight: 400 },
+  large: { family: FONT_FAMILY, px: 40, weight: 400 },
+  clock: { family: FONT_FAMILY, px: 64, weight: 400 },
+} as const;
+type Size = keyof typeof FONT;
+/** Every face and size the canvas needs, for preloading before the first paint. */
+export const FONT_LOADS = Object.values(FONT).map((f) => `${f.weight} ${f.px}px "${f.family}"`);
 type Align = 'left' | 'center' | 'right';
 
 /** Hard-edged text: drawn to a scratch canvas, then every pixel is snapped to fully on or fully off. No anti-aliasing. */
 export function createText(scratch: HTMLCanvasElement) {
   const sctx = scratch.getContext('2d', { willReadFrequently: true });
-  const font = (size: Size) => `${FONT_SIZE[size]}px ${FONT_FAMILY}, monospace`;
+  const font = (size: Size) => `${FONT[size].weight} ${FONT[size].px}px "${FONT[size].family}", monospace`;
 
-  function width(text: string, size: Size, scale = 1): number {
-    if (!sctx) return text.length * FONT_SIZE[size] * scale;
+  function width(text: string, size: Size): number {
+    if (!sctx) return text.length * FONT[size].px;
     sctx.font = font(size);
-    return Math.ceil(sctx.measureText(text).width) * scale;
+    return Math.ceil(sctx.measureText(text).width);
   }
 
-  /** `scale` enlarges the glyphs by a whole number of pixels (nearest-neighbour), for big blocky digits. */
-  function draw(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: Size, color: string, align: Align = 'left', scale = 1) {
+  function draw(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, size: Size, color: string, align: Align = 'left') {
     if (!sctx || !text) return;
     const w = width(text, size);
-    const h = FONT_SIZE[size] + 2;
+    const h = Math.ceil(FONT[size].px * 1.4);
     scratch.width = w + 2;
     scratch.height = h;
     sctx.font = font(size);
@@ -36,9 +42,9 @@ export function createText(scratch: HTMLCanvasElement) {
     sctx.fillStyle = color;
     sctx.fillRect(0, 0, scratch.width, scratch.height);
     sctx.globalCompositeOperation = 'source-over';
-    const left = align === 'center' ? x - (w * scale) / 2 : align === 'right' ? x - w * scale : x;
+    const left = align === 'center' ? x - w / 2 : align === 'right' ? x - w : x;
     ctx.imageSmoothingEnabled = false;
-    ctx.drawImage(scratch, Math.round(left), Math.round(y), scratch.width * scale, scratch.height * scale);
+    ctx.drawImage(scratch, Math.round(left), Math.round(y));
   }
 
   return { width, draw };
@@ -49,18 +55,16 @@ export const rect = (ctx: CanvasRenderingContext2D, color: string, x: number, y:
   ctx.fillRect(x, y, w, h);
 };
 
-/** The Platter app icon at 32x32: a cream "P" on sage, corners cut a pixel-step at a time. */
+/** The Platter app icon at 64x64: a cream "P" on sage, corners cut in 2px steps. */
 function drawPlatterIcon(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  rect(ctx, C.sage, x + 4, y, 24, 32);
-  rect(ctx, C.sage, x + 2, y + 1, 28, 30);
-  rect(ctx, C.sage, x + 1, y + 2, 30, 28);
-  rect(ctx, C.sage, x, y + 4, 32, 24);
+  const sage = (px: number, py: number, w: number, h: number) => rect(ctx, C.sage, x + px, y + py, w, h);
+  sage(8, 0, 48, 64); sage(4, 2, 56, 60); sage(2, 4, 60, 56); sage(0, 8, 64, 48);
   const cream = (px: number, py: number, w: number, h: number) => rect(ctx, C.cream, x + px, y + py, w, h);
-  cream(10, 7, 5, 18);   // stem
-  cream(15, 7, 7, 4);    // top of the bowl
-  cream(22, 9, 4, 8);    // right of the bowl
-  cream(15, 15, 7, 4);   // bottom of the bowl
-  cream(21, 11, 1, 1); cream(21, 14, 1, 1); // soften the inner corners
+  cream(20, 14, 10, 36);  // stem
+  cream(30, 14, 14, 8);   // top of the bowl
+  cream(44, 18, 8, 16);   // right of the bowl
+  cream(30, 30, 14, 8);   // bottom of the bowl
+  cream(42, 22, 2, 2); cream(42, 28, 2, 2); // soften the inner corners
 }
 
 /** Greedy word wrap to `max` pixels. */
@@ -87,44 +91,44 @@ export function createBootRenderer(canvas: HTMLCanvasElement): BootRenderer | nu
   ctx.imageSmoothingEnabled = false;
 
   function splash(scene: BootScene) {
-    text.draw(ctx!, 'AsmitOS', mid, 46, 'large', C.cream, 'center');
-    text.draw(ctx!, BOOT.version, mid, 68, 'small', C.mute, 'center');
+    text.draw(ctx!, 'AsmitOS', mid, 76, 'large', C.cream, 'center');
+    text.draw(ctx!, BOOT.version, mid, 126, 'small', C.mute, 'center');
     const { segments } = BOOT.progress;
-    const barX = 40;
-    const barY = 98;
-    rect(ctx!, C.dim, barX - 2, barY - 2, 164, 12);
-    rect(ctx!, C.glow, barX - 1, barY - 1, 162, 10);
-    for (let i = 0; i < segments; i++) rect(ctx!, i < scene.segments ? C.sageLight : C.dim, barX + 1 + i * 10, barY + 1, 8, 6);
-    text.draw(ctx!, scene.status, mid, 116, 'small', C.light, 'center');
+    const barX = 80;
+    const barY = 196;
+    rect(ctx!, C.dim, barX - 4, barY - 4, 328, 24);
+    rect(ctx!, C.glow, barX - 2, barY - 2, 324, 20);
+    for (let i = 0; i < segments; i++) rect(ctx!, i < scene.segments ? C.sageLight : C.dim, barX + 2 + i * 20, barY + 2, 16, 12);
+    text.draw(ctx!, scene.status, mid, 230, 'small', C.light, 'center');
   }
 
-  /** A flat button with 1px-cut corners and a hard 2px drop shadow. Pressed, the face drops onto the shadow and darkens. */
+  /** A flat button with 2px-cut corners and a hard 4px drop shadow. Pressed, the face drops onto the shadow and darkens. */
   function startButton(pressed: boolean) {
     const { x, y, width, height } = START_RECT;
-    const w = width - 2;
-    const h = height - 2;
+    const w = width - 4;
+    const h = height - 4;
     const box = (color: string, bx: number, by: number) => {
-      rect(ctx!, color, bx + 1, by, w - 2, h);
-      rect(ctx!, color, bx, by + 1, w, h - 2);
+      rect(ctx!, color, bx + 2, by, w - 4, h);
+      rect(ctx!, color, bx, by + 2, w, h - 4);
     };
-    if (!pressed) box(C.dim, x + 2, y + 2);
-    const fx = pressed ? x + 2 : x;
-    const fy = pressed ? y + 2 : y;
+    if (!pressed) box(C.dim, x + 4, y + 4);
+    const fx = pressed ? x + 4 : x;
+    const fy = pressed ? y + 4 : y;
     box(pressed ? C.sageDark : C.sage, fx, fy);
-    if (!pressed) { rect(ctx!, C.sageLight, fx + 2, fy, w - 4, 1); rect(ctx!, C.sageLight, fx, fy + 2, 1, h - 4); }
-    text.draw(ctx!, 'START', fx + w / 2, fy + Math.floor((h - 8) / 2), 'small', C.cream, 'center');
+    if (!pressed) { rect(ctx!, C.sageLight, fx + 4, fy, w - 8, 2); rect(ctx!, C.sageLight, fx, fy + 4, 2, h - 8); }
+    text.draw(ctx!, 'START', fx + w / 2, fy + Math.floor((h - FONT.small.px) / 2), 'small', C.cream, 'center');
   }
 
   function card(appStoreLine: string, pressed: boolean) {
-    drawPlatterIcon(ctx!, mid - 16, 10);
-    text.draw(ctx!, 'Platter', mid, 48, 'large', C.cream, 'center');
-    const lines = wrap((t) => text.width(t, 'small'), PLATTER_TAGLINE, 160);
-    lines.forEach((line, i) => text.draw(ctx!, line, mid, 69 + i * 10, 'small', C.light, 'center'));
+    drawPlatterIcon(ctx!, mid - 32, 20);
+    text.draw(ctx!, 'Platter', mid, 90, 'large', C.cream, 'center');
+    const lines = wrap((t) => text.width(t, 'small'), PLATTER_TAGLINE, 400);
+    lines.forEach((line, i) => text.draw(ctx!, line, mid, 142 + i * 22, 'small', C.light, 'center'));
     const { x, y, width, height } = LINK_RECT;
     rect(ctx!, C.amber, x, y, width, height);
-    rect(ctx!, C.glow, x + 1, y + 1, width - 2, height - 2);
-    text.draw(ctx!, appStoreLine, mid, y + 4, 'small', C.amber, 'center');
-    text.draw(ctx!, 'platterapp.tech', mid, y + height + 5, 'small', C.mute, 'center');
+    rect(ctx!, C.glow, x + 2, y + 2, width - 4, height - 4);
+    text.draw(ctx!, appStoreLine, mid, y + 6, 'small', C.amber, 'center');
+    text.draw(ctx!, 'platterapp.tech', mid, y + height + 8, 'small', C.mute, 'center');
     startButton(pressed);
   }
 

@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
-import '@fontsource/silkscreen/400.css';
+import '@fontsource/pixelify-sans/400.css';
 import { playBootChime } from '../audio/bootChime';
 import { CANVAS, LINK_RECT, PLATTER_APP_STORE_STATUS, platterAppStoreCopy, START_RECT, type PlatterAppStoreStatus } from './bootConfig';
-import { createBootRenderer, FONT_FAMILY } from './bootRender';
+import { createBootRenderer, FONT_LOADS } from './bootRender';
 import { sceneAt, type BootScene, type BootStage } from './bootScene';
 
 interface BootSequenceProps {
@@ -22,7 +22,7 @@ const place = (rect: { x: number; y: number; width: number; height: number }) =>
 });
 
 /**
- * The first-visit boot, drawn on a 240x160 canvas (the Sidekick II display) and scaled up with nearest-neighbour.
+ * The first-visit boot, drawn on a 480x320 canvas (the Sidekick II display) and scaled up with nearest-neighbour.
  * It lives inside the screen layer. The Platter card never advances by itself: only the Start button, Enter or the
  * trackball/D-pad centre (routed here through `onStart` by the dispatcher in useHardwareKeyboard) end it.
  */
@@ -59,7 +59,7 @@ export function BootSequence({ active, reducedMotion, onStart, onCard, status = 
       if (scene.stage !== 'card') frame = requestAnimationFrame(run);
     };
     // Redraw once the pixel font arrives, so the first frame is never in a fallback face.
-    void document.fonts?.load(`8px ${FONT_FAMILY}`).then(() => document.fonts.load(`16px ${FONT_FAMILY}`)).then(() => paint.current());
+    void Promise.all(FONT_LOADS.map((font) => document.fonts?.load(font))).then(() => paint.current());
     frame = requestAnimationFrame(run);
     return () => cancelAnimationFrame(frame);
   }, [active, reducedMotion, line]);

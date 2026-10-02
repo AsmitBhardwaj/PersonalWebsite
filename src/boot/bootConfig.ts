@@ -1,6 +1,6 @@
 /**
  * Everything tunable about the first-visit boot sequence. Durations are milliseconds, coordinates are pixels on the
- * 240x160 logical canvas (the Sidekick II display), colours are flat hex.
+ * 480x320 logical canvas (the Sidekick II display), colours are flat hex.
  */
 
 /** The Apple ID of the Platter listing. Replace before the App Store line goes live. */
@@ -69,27 +69,26 @@ export const BOOT = {
   },
 } as const;
 
-export const CANVAS = { width: 240, height: 160 } as const;
+export const CANVAS = { width: 480, height: 320 } as const;
 
-/** The Start button on the card, in canvas pixels. It includes the 2px drop shadow, which the pressed state gives up. */
-export const START_RECT = { x: 85, y: 134, width: 72, height: 18 } as const;
+/** The Start button on the card, in canvas pixels. It includes the 4px drop shadow, which the pressed state gives up. */
+export const START_RECT = { x: 170, y: 268, width: 144, height: 36 } as const;
 
 /** The tappable App Store line on the card, in canvas pixels. */
-export const LINK_RECT = { x: 40, y: 99, width: 160, height: 15 } as const;
+export const LINK_RECT = { x: 80, y: 198, width: 320, height: 30 } as const;
 
 /** The dim screen of the shut device, drawn with the same canvas, font and palette as the boot. Coordinates are canvas pixels. */
 export const LOCK = {
-  /** Faint 1px scanlines on every other row: the only colour that is not part of the boot palette. */
+  /** Faint 2px scanlines on every other row: the only colour that is not part of the boot palette. */
   scanline: '#0b1516',
-  statusBarHeight: 12,
-  softkeyHeight: 14,
+  statusBarHeight: 22,
+  softkeyHeight: 28,
   softkeyText: 'OPEN TO START',
-  /** Top of the big clock, and of the date under it. The clock is drawn at `clockScale` times the large font. */
-  clockY: 50,
-  clockScale: 2,
-  dateY: 100,
+  /** Top of the big clock (drawn in the native `clock` font size, not scaled up), and of the date under it. */
+  clockY: 80,
+  dateY: 172,
   /** The notification card sits between the date and the softkey bar. */
-  notice: { x: 6, y: 112, height: 31 },
+  notice: { x: 12, y: 200, height: 62 },
   batterySegments: 4,
   signalBars: 4,
 } as const;

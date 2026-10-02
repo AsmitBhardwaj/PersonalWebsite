@@ -24,7 +24,7 @@ async function toCard(page: Page) {
 /** A pixel on the Start face, away from the lettering and the highlight edge, as [r, g, b]. */
 const startFace = (page: Page) => page.evaluate(({ x, y }) => {
   const canvas = document.querySelector<HTMLCanvasElement>('.boot-seq canvas')!;
-  return [...canvas.getContext('2d')!.getImageData(x + 5, y + 3, 1, 1).data.slice(0, 3)];
+  return [...canvas.getContext('2d')!.getImageData(x + 8, y + 8, 1, 1).data.slice(0, 3)];
 }, START_RECT);
 
 test.describe('first visit', () => {
