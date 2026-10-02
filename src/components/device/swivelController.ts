@@ -19,6 +19,13 @@ export interface SwivelHooks {
   onBeforeOpen?: () => void;
   /** The redraw dim has finished fading back in on `face`. */
   onRedrawEnd?: (face: Face) => void;
+  /** The phone buzzed (first visit): `count` buzzes so far. */
+  onBuzz?: (count: number) => void;
+}
+
+export interface SwivelOptions {
+  /** First visit: the idle cue is the ringing phone, not the lid nudge, until the lid has been opened once. */
+  ring?: boolean;
 }
 
 export interface SwivelController {
@@ -33,7 +40,7 @@ export interface SwivelController {
   destroy: () => void;
 }
 
-const { pose: POSE, swing: SWING, drag: DRAG, recoil: RECOIL, redraw: REDRAW, idle: IDLE } = SWIVEL;
+const { pose: POSE, swing: SWING, drag: DRAG, recoil: RECOIL, redraw: REDRAW, idle: IDLE, ring: RING } = SWIVEL;
 const REST_ANGLE: Record<Rest, number> = { closed: SWIVEL_REST.closed, open: SWIVEL_REST.open };
 const seconds = (ms: number) => ms / 1000;
 const prefersReducedMotion = () => typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -59,7 +66,7 @@ interface DragState {
  * settle, the drag and the spring-back all just feed it angles. Only transform, opacity and filter are written.
  * The camera zoom moves the wrapper above this, so the two never share an element.
  */
-export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelController {
+export function createSwivel(stage: HTMLElement, hooks: SwivelHooks, options: SwivelOptions = {}): SwivelController {
   const find = (selector: string) => stage.querySelector<HTMLElement>(selector);
   const display = find('.display-assembly');
   const phone = find('.phone');
@@ -82,6 +89,7 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   let ghostOn = true;
   let drag: DragState | null = null;
   let nudging = false;
+  let buzzes = 0;
   /** The device has been open at least once, so the visitor has found the lid and the auto-open safety net has done its job. */
   let everOpened = false;
   let active: gsap.core.Animation[] = [];
@@ -118,6 +126,7 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
   }
 
   function stopAll() {
+    if (nudging) gsap.set(stage, { clearProps: 'transform' });
     nudging = false;
     active.forEach((animation) => animation.kill());
     active = [];
@@ -150,6 +159,23 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
       .to(state, { a: REST_ANGLE.closed, duration: seconds(SWING.springBackMs), ease: `back.out(${SWING.springBackOvershoot})`, onUpdate: () => render(state.a) }));
   }
 
+  /** The phone buzzes: a quick horizontal shake of the whole device, then the page is told to wake the lock screen. */
+  function buzz() {
+    buzzes += 1;
+    stage.dataset.buzzes = String(buzzes);
+    hooks.onBuzz?.(buzzes);
+    nudging = true;
+    busy = true;
+    const pulse = seconds(RING.durationMs) / RING.pulses;
+    const shake = gsap.timeline({ onComplete: () => { nudging = false; busy = false; gsap.set(stage, { clearProps: 'transform' }); } });
+    for (let i = 0; i < RING.pulses; i++) {
+      shake.to(stage, { x: RING.shakePx, duration: pulse / 4, ease: 'none' })
+        .to(stage, { x: -RING.shakePx, duration: pulse / 2, ease: 'none' })
+        .to(stage, { x: 0, duration: pulse / 4, ease: 'none' });
+    }
+    track(shake);
+  }
+
   /** Any interaction ends a nudge on the spot, back at rest. */
   function cancelNudge() {
     if (!nudging) return;
@@ -159,11 +185,21 @@ export function createSwivel(stage: HTMLElement, hooks: SwivelHooks): SwivelCont
     render(REST_ANGLE.closed);
   }
 
-  const idle = createIdleScheduler(IDLE, {
+  const ringing = () => Boolean(options.ring) && !everOpened;
+  // The first buzz comes `firstBuzzMs` after load. Once one has gone, a restart after an interaction waits a full gap.
+  const cue = {
+    get nudgeAfterMs() { return ringing() && buzzes === 0 ? RING.firstBuzzMs : ringing() ? RING.buzzEveryMs : IDLE.nudgeAfterMs; },
+    get nudgeEveryMs() { return ringing() ? RING.buzzEveryMs : IDLE.nudgeEveryMs; },
+    get maxNudges() { return ringing() ? RING.maxBuzzes : IDLE.maxNudges; },
+    autoOpenAfterMs: IDLE.autoOpenAfterMs,
+  };
+  const idle = createIdleScheduler(cue, {
     active: () => rest === 'closed' && !busy && !drag && !document.hidden,
-    nudge,
+    // The cap lives here, not in `active`, which the auto-open shares.
+    nudge: () => { if (!ringing()) nudge(); else if (buzzes < RING.maxBuzzes) buzz(); },
     autoOpen: () => api.open({ user: false }),
-    nudgesEnabled: () => !prefersReducedMotion(),
+    // The buzz is capped at `maxBuzzes` for the whole visit, however often an interaction restarts the clock. Reduced motion has no shake.
+    nudgesEnabled: () => !prefersReducedMotion() && (!ringing() || buzzes < RING.maxBuzzes),
     autoOpenEnabled: () => !everOpened,
   });
   const onInteraction = () => { cancelNudge(); if (rest === 'closed' && !busy && !drag) idle.start(); };

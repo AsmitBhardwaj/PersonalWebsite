@@ -1,5 +1,6 @@
 import type { RefObject } from 'react';
 import { PhoneScreen } from './PhoneScreen';
+import type { LockRing } from './LockScreen';
 import type { BootState } from './PhoneDevice';
 import { TouchKeyboard, type TouchKeyboardProps } from './TouchKeyboard';
 import type { AppId } from '../../apps/types';
@@ -10,6 +11,7 @@ const GENERATED_ROOT = '/assets/device/generated';
 
 interface DisplayAssemblyProps {
   ready: boolean;
+  ring?: LockRing;
   activeApp: AppId | null;
   focused: boolean;
   needsRotate: boolean;
@@ -33,7 +35,7 @@ interface DisplayAssemblyProps {
   onBootCard: () => void;
 }
 
-export function DisplayAssembly({ ready, activeApp, focused, needsRotate, transitioning, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, lidOpenable, onOpenRequest, boot, bootReducedMotion, onBootStart, onBootCard }: DisplayAssemblyProps) {
+export function DisplayAssembly({ ready, ring, activeApp, focused, needsRotate, transitioning, touchKeys, shellRef, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, lidOpenable, onOpenRequest, boot, bootReducedMotion, onBootStart, onBootCard }: DisplayAssemblyProps) {
   return <>
     <div className="contact-shadow" aria-hidden="true"/>
     <div className="motion-ghost" aria-hidden="true">
@@ -49,7 +51,7 @@ export function DisplayAssembly({ ready, activeApp, focused, needsRotate, transi
       <div className="display-front-face">
         <span className="lid-grip" aria-hidden="true"/>
         <div className="screen-shell" ref={shellRef}>
-          <PhoneScreen ready={ready} navigation={{ activeApp, focused, needsRotate, transitioning, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, boot, bootReducedMotion, onBootStart, onBootCard }}/>
+          <PhoneScreen ready={ready} ring={ring} navigation={{ activeApp, focused, needsRotate, transitioning, highlightedIndex, terminal, bus, openApp, goHome, closeTerminal, boot, bootReducedMotion, onBootStart, onBootCard }}/>
           {touchKeys && <TouchKeyboard {...touchKeys}/>}
           <div className="glass-reflection" aria-hidden="true"/>
           <div className="glass-glare" aria-hidden="true"><i/></div>

@@ -7,7 +7,7 @@ import type { AppId } from '../../apps/types';
 import { createInputBus, type InputBus } from '../../input/inputBus';
 import { AppIcon } from '../ui/AppIcon';
 import { DockButton } from '../ui/DockButton';
-import { LockScreen } from './LockScreen';
+import { LockScreen, type LockRing } from './LockScreen';
 import { RotatePrompt } from './RotatePrompt';
 import { HardwareTerminal } from './HardwareTerminal';
 import { BootSequence } from '../../boot/BootSequence';
@@ -36,9 +36,9 @@ interface PhoneScreenNavigation {
 
 const noop = () => undefined;
 
-interface PhoneScreenProps { ready: boolean; navigation?: PhoneScreenNavigation; }
+interface PhoneScreenProps { ready: boolean; ring?: LockRing; navigation?: PhoneScreenNavigation; }
 
-export function PhoneScreen({ ready, navigation }: PhoneScreenProps) {
+export function PhoneScreen({ ready, ring, navigation }: PhoneScreenProps) {
   const [internalActiveApp, setInternalActiveApp] = useState<AppId | null>(null);
   const [internalBus] = useState(createInputBus);
   const activeApp = navigation ? navigation.activeApp : internalActiveApp;
@@ -54,7 +54,7 @@ export function PhoneScreen({ ready, navigation }: PhoneScreenProps) {
   }, [navigation]);
 
   return <div className="screen-viewport">
-    <LockScreen on={!ready}/>
+    <LockScreen on={!ready} ring={ring}/>
     <div className={`phone-os ${ready ? 'is-ready' : ''}`} style={{ backgroundImage: `url(${portfolio.wallpaperPath})` }}>
       <header className="status-bar"><span><i className="signal-bars"/>{portfolio.statusName}</span><span><Wifi size={11}/><time>10:21</time><i className="battery"/></span></header>
       <main className={`screen-content ${app ? 'has-app' : ''}`}>

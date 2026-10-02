@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
 import { PhoneDevice, type BootState, type IntroPhase } from './components/device/PhoneDevice';
+import { SWIVEL } from './components/device/swivelConfig';
+import type { LockRing } from './components/device/LockScreen';
 import { createSwivel, type SwivelController } from './components/device/swivelController';
 import { SoundToggle } from './components/ui/SoundToggle';
 import { preloadClack } from './audio/clack';
@@ -31,6 +33,11 @@ export default function App() {
   /** The Platter card is on screen, so Start can be pressed from the trackball or D-pad. */
   const bootCardRef = useRef(false);
   const [reducedMotion] = useState(prefersReducedMotion);
+  /** First visit: the phone is ringing with a message until the lid has been opened (see SWIVEL.ring). */
+  const [firstVisit] = useState(() => !hasBooted());
+  const [buzzed, setBuzzed] = useState(false);
+  const [messageRead, setMessageRead] = useState(false);
+  const ring: LockRing = !firstVisit || messageRead ? 'off' : buzzed || reducedMotion ? 'awake' : 'idle';
 
   const setBoot = useCallback((next: BootState) => { bootRef.current = next; if (next !== 'playing') bootCardRef.current = false; setBootState(next); }, []);
   const onBootCard = useCallback(() => { bootCardRef.current = true; }, []);
@@ -86,7 +93,8 @@ export default function App() {
     const stage = stageRef.current;
     if (!stage) return;
     const swivel = createSwivel(stage, {
-      onPhase: (phase) => { setIntroPhase(phase); if (phase === 'open') setIntroActive(false); },
+      onPhase: (phase) => { setIntroPhase(phase); if (phase === 'open') { setIntroActive(false); setMessageRead(true); } },
+      onBuzz: () => setBuzzed(true),
       onContent: (face) => {
         setReady(face === 'home');
         if (face === 'home') {
@@ -95,9 +103,10 @@ export default function App() {
       },
       onRedrawEnd: (face) => { if (face === 'home') startBootClock(); },
       onBeforeOpen: () => timelineRef.current?.totalProgress(1, false),
-    });
+    }, { ring: firstVisit });
     swivelRef.current = swivel;
-    if (prefersReducedMotion()) {
+    // Reduced motion skips the intro and lands on the open device, except on a first visit, which stays on the closed phone to show the message.
+    if (prefersReducedMotion() && !firstVisit) {
       gsap.set(stage, { opacity: 0 });
       finishIntro(true);
       gsap.to(stage, { opacity: 1, duration: 0.15 });
@@ -117,6 +126,7 @@ export default function App() {
       .to(glass, { xPercent: 120, duration: 0.48, ease: 'sine.inOut' }, 0.08)
       .call(() => setIntroPhase('wake'), [], 0.76)
       .to(ambient, { opacity: 0.78, scaleX: 1.04, duration: 0.5 }, 0.6);
+    if (prefersReducedMotion()) { timeline.totalProgress(1); setIntroActive(false); }
     return () => { timeline.kill(); swivel.destroy(); swivelRef.current = null; };
   }, { scope: stageRef });
 
@@ -145,12 +155,12 @@ export default function App() {
   return <main className="portfolio-stage">
     <a className="skip-link" href="#phone">Skip to portfolio</a>
     <div className="studio-light" aria-hidden="true"/>
-    <div id="phone" className="device-wrap"><PhoneDevice ref={stageRef} ready={ready} phase={introPhase} onOpenRequest={requestOpen} boot={boot} bootReducedMotion={reducedMotion} onBootStart={endBoot} onBootCard={onBootCard} onReboot={reboot} onCloseLid={closeLid}/></div>
+    <div id="phone" className="device-wrap"><PhoneDevice ref={stageRef} ready={ready} ring={ring} phase={introPhase} onOpenRequest={requestOpen} boot={boot} bootReducedMotion={reducedMotion} onBootStart={endBoot} onBootCard={onBootCard} onReboot={reboot} onCloseLid={closeLid}/></div>
     {/* Device-level controls. Music controls are meant to join the sound toggle here. */}
     <div className="device-controls"><SoundToggle/></div>
     {introActive && <button className="skip-intro" onClick={() => finishIntro()}>Skip intro</button>}
     {introPhase === 'open'
       ? <div className="depth-hint" aria-hidden="true"><span/>Explore inside the device</div>
-      : introPhase === 'wake' && <button type="button" className="open-prompt" onClick={requestOpen}><i aria-hidden="true"/>Tap, drag or press Enter to open</button>}
+      : introPhase === 'wake' && <button type="button" className="open-prompt" onClick={requestOpen}><i aria-hidden="true"/>{firstVisit && !messageRead ? SWIVEL.ring.pillText : 'Tap, drag or press Enter to open'}</button>}
   </main>;
 }

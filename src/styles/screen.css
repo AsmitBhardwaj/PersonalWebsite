@@ -76,6 +76,7 @@
 /* Lock screen of the shut device: a pixel canvas like the boot (see .boot-seq). Turned 180deg against the lid so it reads upright when closed; it rotates with the lid until the swap to home. */
 .lock-screen { position:absolute; inset:0; z-index:1; display:none; place-items:center; container-type:size; transform:rotate(180deg); background:#000; }
 .lock-screen[data-on='true'] { display:grid; }
+.lock-screen__lcd { filter:brightness(var(--lock-brightness,1)); transition:filter var(--lock-wake-ms,0ms) ease-out; }
 
 /* Photos: profile header, 3-column square grid, full-screen viewer. */
 .screen-page.photos-page{padding:0;background:#fafafa}.photos-scroll{position:absolute;inset:0;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#72848c transparent}

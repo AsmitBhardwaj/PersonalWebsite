@@ -88,6 +88,8 @@ export const LOCK = {
   clockY: 50,
   clockScale: 2,
   dateY: 100,
+  /** The notification card sits between the date and the softkey bar. */
+  notice: { x: 6, y: 112, height: 31 },
   batterySegments: 4,
   signalBars: 4,
 } as const;

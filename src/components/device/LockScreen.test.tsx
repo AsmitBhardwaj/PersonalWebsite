@@ -1,8 +1,9 @@
-import { render } from '@testing-library/react';
-import { describe, expect, it } from 'vitest';
+import { act, render } from '@testing-library/react';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { CANVAS } from '../../boot/bootConfig';
 import { formatLockDate, formatLockTime } from '../../boot/lockRender';
 import { LockScreen } from './LockScreen';
+import { SWIVEL } from './swivelConfig';
 
 describe('LockScreen', () => {
   it('is a 240x160 pixel canvas that shares the boot canvas styling, with the live time and date as text for tests and readers', () => {
@@ -36,5 +37,42 @@ describe('lock screen text', () => {
   it('formats the date as WEEKDAY MONTH DAY in capitals', () => {
     expect(formatLockDate(new Date(2026, 9, 1))).toBe('THU OCT 1');
     expect(formatLockDate(new Date(2026, 11, 25))).toBe('FRI DEC 25');
+  });
+});
+
+describe('LockScreen first-visit ring', () => {
+  afterEach(() => { vi.useRealTimers(); vi.unstubAllGlobals(); });
+  const reduced = (matches: boolean) => vi.stubGlobal('matchMedia', (query: string) => ({ matches: matches && query.includes('reduce'), media: query, addEventListener: () => undefined, removeEventListener: () => undefined }));
+
+  it('is plain without a ring: full brightness, no message', () => {
+    const { container } = render(<LockScreen on/>);
+    expect(container.querySelector('.lock-screen')).toHaveAttribute('data-ring', 'off');
+    expect(container.textContent).not.toContain(SWIVEL.ring.notification.body);
+  });
+
+  it('is dimmed while idle and shows no message yet', () => {
+    const { container } = render(<LockScreen on ring="idle"/>);
+    const lock = container.querySelector<HTMLElement>('.lock-screen')!;
+    expect(lock.style.getPropertyValue('--lock-brightness')).toBe(String(SWIVEL.ring.idleBrightness));
+    expect(container.textContent).not.toContain(SWIVEL.ring.notification.body);
+  });
+
+  it('brightens and carries the message once awake', () => {
+    vi.useFakeTimers();
+    reduced(false);
+    const { container } = render(<LockScreen on ring="awake"/>);
+    act(() => { vi.advanceTimersByTime(SWIVEL.ring.slideMs + 50); });
+    const lock = container.querySelector<HTMLElement>('.lock-screen')!;
+    expect(lock.style.getPropertyValue('--lock-brightness')).toBe(String(SWIVEL.ring.awakeBrightness));
+    expect(lock).toHaveAttribute('data-notice', 'true');
+    expect(lock.textContent).toContain('1 new message');
+    expect(lock.textContent).toContain('asmit: hey, you found my sidekick');
+  });
+
+  it('with reduced motion has no wake transition and the message is there at once', () => {
+    reduced(true);
+    const { container } = render(<LockScreen on ring="awake"/>);
+    expect(container.querySelector<HTMLElement>('.lock-screen')!.style.getPropertyValue('--lock-wake-ms')).toBe('0ms');
+    expect(container.textContent).toContain(SWIVEL.ring.notification.body);
   });
 });

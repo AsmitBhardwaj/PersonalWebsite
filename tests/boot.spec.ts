@@ -118,7 +118,7 @@ test.describe('first visit', () => {
 
   test('reduced motion shows the same card with a Start button, no animation and no timeout', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
-    await page.goto('/');
+    await openLid(page); // a first visit waits on the closed phone with its message, then crossfades open
     await expect(boot(page)).toHaveAttribute('data-boot-stage', 'card');
     await expect(startButton(page)).toBeVisible();
     await page.waitForTimeout(2500);

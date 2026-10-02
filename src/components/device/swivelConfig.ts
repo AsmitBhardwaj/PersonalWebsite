@@ -132,6 +132,31 @@ export const SWIVEL = {
     autoOpenAfterMs: 12000,
   },
 
+  /**
+   * First visit only: the phone "rings" instead of nudging the lid. A buzz shakes the whole device sideways (transform only)
+   * and wakes the lock screen, which then keeps a message notification up. Visual only, since sound needs a gesture first.
+   * Real waits like `idle`, so not scaled by SWIVEL_SPEED. Returning visitors, and the first visit once the lid has been
+   * opened, get the normal nudge.
+   */
+  ring: {
+    firstBuzzMs: 1500,
+    buzzEveryMs: 5000,
+    maxBuzzes: 3,
+    /** One buzz: `pulses` quick left-right shakes squeezed into `durationMs`, each `shakePx` wide. */
+    pulses: 3,
+    durationMs: 350,
+    shakePx: 3,
+    /** Lock screen brightness before the first buzz (idle) and after it, and how long the change takes. */
+    idleBrightness: 0.55,
+    awakeBrightness: 1,
+    wakeMs: 180,
+    /** The notification slides in over `slideSteps` hard pixel steps spanning `slideMs`. */
+    slideMs: 240,
+    slideSteps: 6,
+    pillText: 'Tap to read the message',
+    notification: { title: '1 new message', body: 'asmit: hey, you found my sidekick' },
+  },
+
   /** Ghost of the lid left behind mid-swing (existing intro flourish). */
   ghostPeakOpacity: 0.18,
   /** Contact shadow under the screen at each rest pose (existing intro values). */

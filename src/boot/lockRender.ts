@@ -18,7 +18,10 @@ export function formatLockDate(now: Date): string {
 
 export const lockFace = (now: Date = new Date()): LockFace => ({ time: formatLockTime(now), date: formatLockDate(now) });
 
-export interface LockRenderer { draw: (face: LockFace) => void }
+/** A notification card on the lock screen. `slide` runs 0 (off to the right) to 1 (in place). */
+export interface LockNotice { title: string; body: string; slide: number }
+
+export interface LockRenderer { draw: (face: LockFace, notice?: LockNotice | null) => void }
 
 /** Draws the lock screen on a 240x160 canvas: pixel status bar, big blocky clock and date, softkey bar. Flat colours, hard edges. */
 export function createLockRenderer(canvas: HTMLCanvasElement): LockRenderer | null {
@@ -42,7 +45,7 @@ export function createLockRenderer(canvas: HTMLCanvasElement): LockRenderer | nu
   }
 
   return {
-    draw(face) {
+    draw(face, notice) {
       rect(ctx, C.glow, 0, 0, width, height);
       for (let y = 1; y < height; y += 2) rect(ctx, LOCK.scanline, 0, y, width, 1);
 
@@ -53,6 +56,17 @@ export function createLockRenderer(canvas: HTMLCanvasElement): LockRenderer | nu
 
       text.draw(ctx, face.time, width / 2, LOCK.clockY, 'large', C.cream, 'center', LOCK.clockScale);
       text.draw(ctx, face.date, width / 2, LOCK.dateY, 'small', C.light, 'center');
+
+      if (notice) {
+        const x = LOCK.notice.x + Math.round((1 - notice.slide) * (width - LOCK.notice.x));
+        const { y, height: h } = LOCK.notice;
+        const w = width - LOCK.notice.x * 2;
+        rect(ctx, C.light, x, y, w, h);
+        rect(ctx, C.black, x + 1, y + 1, w - 2, h - 2);
+        rect(ctx, C.sage, x + 1, y + 1, 3, h - 2);
+        text.draw(ctx, notice.title.toUpperCase(), x + 8, y + 5, 'small', C.sageLight);
+        text.draw(ctx, notice.body, x + 8, y + 18, 'small', C.cream);
+      }
 
       const barY = height - LOCK.softkeyHeight;
       rect(ctx, C.dim, 0, barY, width, LOCK.softkeyHeight);

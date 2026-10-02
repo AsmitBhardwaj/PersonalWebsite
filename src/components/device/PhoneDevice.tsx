@@ -3,6 +3,7 @@ import { appById } from '../../apps/registry';
 import type { AppId } from '../../apps/types';
 import { DeviceBase, GroundShadow } from './DeviceBase';
 import { DisplayAssembly } from './DisplayAssembly';
+import type { LockRing } from './LockScreen';
 import { HardwareControlsOverlay } from './HardwareControlsOverlay';
 import { useFocusMode } from './useFocusMode';
 import { useLandscapePhone } from './useLandscapePhone';
@@ -14,6 +15,7 @@ export type BootState = 'off' | 'pending' | 'playing';
 
 interface PhoneDeviceProps {
   ready: boolean;
+  ring?: LockRing;
   phase: IntroPhase;
   onOpenRequest: () => void;
   boot: BootState;
@@ -24,7 +26,7 @@ interface PhoneDeviceProps {
   onCloseLid: () => void;
 }
 
-export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function PhoneDevice({ ready, phase, onOpenRequest, boot, bootReducedMotion, onBootStart, onBootCard, onReboot, onCloseLid }, ref) {
+export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function PhoneDevice({ ready, ring, phase, onOpenRequest, boot, bootReducedMotion, onBootStart, onBootCard, onReboot, onCloseLid }, ref) {
   const compareDevice = import.meta.env.DEV && new URLSearchParams(window.location.search).get('compareDevice') === '1';
   const showKeyMap = import.meta.env.DEV && new URLSearchParams(window.location.search).get('showKeyMap') === '1';
   const comparisonReference = import.meta.env.DEV ? '/src/assets/device/source/sidekickI.png' : '';
@@ -61,6 +63,7 @@ export const PhoneDevice = forwardRef<HTMLDivElement, PhoneDeviceProps>(function
       <DeviceBase/>
       <DisplayAssembly
         ready={ready}
+        ring={ring}
         activeApp={activeApp}
         focused={focused}
         needsRotate={needsRotate}
