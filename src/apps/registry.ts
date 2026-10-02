@@ -1,9 +1,10 @@
-import { BriefcaseBusiness, Camera, CircleUserRound, Contact, Keyboard, Music, NotebookPen, StickyNote, Worm } from 'lucide-react';
+import { BriefcaseBusiness, Camera, CircleUserRound, Contact, Keyboard, Music, Newspaper, NotebookPen, StickyNote, Worm } from 'lucide-react';
 import type { AppDefinition, AppId } from './types';
 import { AboutApp } from './AboutApp';
 import { ContactApp } from './ContactApp';
 import { ExperienceApp } from './ExperienceApp';
 import { MusicApp } from './MusicApp';
+import { NewsApp } from './NewsApp';
 import { NotesApp } from './NotesApp';
 import { PhotosApp } from './PhotosApp';
 import { ProjectsApp } from './ProjectsApp';
@@ -19,6 +20,7 @@ export const apps: AppDefinition[] = [
   { id: 'experience', label: 'Experience', icon: NotebookPen, tone: '#e0af45', component: ExperienceApp, presentation: 'read', aliases: ['exp'] },
   { id: 'about', label: 'About', icon: CircleUserRound, tone: '#6ba7c9', component: AboutApp, presentation: 'read', aliases: ['bio'] },
   { id: 'notes', label: 'Now', icon: StickyNote, tone: '#87a66e', component: NotesApp, presentation: 'read', aliases: ['now'] },
+  { id: 'news', label: 'News', icon: Newspaper, tone: '#c9604f', component: NewsApp, presentation: 'read', aliases: ['blog', 'posts'] },
   { id: 'contact', label: 'Contact', icon: Contact, tone: '#ba7a9a', component: ContactApp, presentation: 'read' },
   { id: 'photos', label: 'Photos', icon: Camera, tone: '#b87a4b', component: PhotosApp, presentation: 'read', aliases: ['photo', 'pics'] },
   { id: 'type', label: 'Type', icon: Keyboard, tone: '#8a7bc4', component: TypeApp, presentation: 'play', touchDpad: false, aliases: ['game'] },

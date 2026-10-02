@@ -24,3 +24,27 @@ export function personJsonLd(content: PortfolioContent) {
 /** JSON for a JSON-LD <script> body, with `<` escaped so it cannot close the tag early. */
 export const jsonLdBody = (data: unknown) => JSON.stringify(data).replace(/</g, '\\u003c');
 export const jsonLdScript = (data: unknown) => `<script type="application/ld+json">${jsonLdBody(data)}</script>`;
+
+export const NEWS_PATH = '/news';
+export const RSS_PATH = '/rss.xml';
+export const RSS_URL = `${SITE_URL}${RSS_PATH}`;
+export const postPath = (slug: string) => `${NEWS_PATH}/${slug}`;
+export const postUrl = (slug: string) => `${SITE_URL}${postPath(slug)}`;
+
+/** The feed link every page carries in its <head>. */
+export const RSS_LINK_TAG = `<link rel="alternate" type="application/rss+xml" title="Asmit Bhardwaj: News" href="${RSS_PATH}">`;
+
+/** schema.org Article for one news post. */
+export function articleJsonLd(post: { slug: string; title: string; date: string; summary: string }, authorName: string) {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.summary,
+    datePublished: post.date,
+    dateModified: post.date,
+    url: postUrl(post.slug),
+    mainEntityOfPage: postUrl(post.slug),
+    author: { '@type': 'Person', name: authorName, url: HOME_URL },
+  };
+}

@@ -47,6 +47,25 @@ The snap plays `public/assets/audio/clack.wav` (about 5 KB), only for a swivel t
 
 **Licence:** the clack is synthesised by `scripts/generate-clack.mjs` (`npm run assets:audio`), so it is original work released under CC0 1.0 (public domain). No third-party audio is used.
 
+## News posts
+
+Write a post by adding one Markdown file to `content/news/`; no other edit is needed.
+
+```markdown
+---
+title: My post
+date: 2026-10-02
+summary: One sentence for the card, the meta description and the feed.
+---
+
+Body in Markdown: `##`-`####` headings, paragraphs, lists, quotes, fenced code, rules, **bold**, *italic*, `code` and [links](https://example.com).
+```
+
+- The slug is the filename (`my-post.md` becomes `/news/my-post`). `date` is `YYYY-MM-DD`. Add `draft: true` to keep a file out of everything below. A missing field, a bad date or a duplicate slug fails the build and names the file.
+- One parser (`src/content/news.ts`, with `markdown.ts`) feeds both the app and the build, so a new file produces all of: a card in the **News** app (newest first, with reading time), a static page at `/news/<slug>` (own title, description, canonical, Open Graph, Article JSON-LD), an `rss.xml` item, a `sitemap.xml` entry with `lastmod`, a section in `llms.txt`, a line in the `/plain` page, and a link in the `<noscript>` block of `index.html`.
+- `vite.config.ts` generates the pages and files (`/plain`, `/news/<slug>`, `robots.txt`, `sitemap.xml`, `llms.txt`, `rss.xml`) into `dist/` at build and serves them from middleware in `dev` and `preview`. They are not in `public/`; the templates live in `src/content/` (`newsPages.ts`, `plainPage.ts`, `crawlerFiles.ts`). `sitemap.xml` also lists every photo from the Photos manifest with its caption.
+- Vercel serves `dist/` files before anything else (`vercel.json` has `cleanUrls` and content-type headers); there is no SPA rewrite, so `/news/<slug>` is always the static file.
+
 ## Adding an app or game
 
 1. Create `src/apps/MyApp.tsx` exporting a component. It receives `{ input, paused, close }`.
