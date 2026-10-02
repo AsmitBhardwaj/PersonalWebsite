@@ -13,4 +13,9 @@ describe('command registry', () => {
     expect(resolveCommand('close')).toEqual({ type: 'close' });
     expect(availableCommands).toContain('close');
   });
+
+  it('has a plain command, listed in help', () => {
+    expect(resolveCommand('plain')).toEqual({ type: 'plain' });
+    expect(availableCommands).toContain('plain');
+  });
 });

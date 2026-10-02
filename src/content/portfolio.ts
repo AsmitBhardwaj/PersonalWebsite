@@ -37,6 +37,8 @@ export interface Note {
 export interface PortfolioContent {
   name: string;
   statusName: string;
+  /** One line under the name on the plain page. */
+  tagline: string;
   /** Optional large heading for About. Falls back to the name. */
   headline?: string;
   /** One entry per paragraph. */
@@ -60,6 +62,7 @@ export interface PortfolioContent {
 export const portfolio: PortfolioContent = {
   name: 'Asmit Bhardwaj',
   statusName: 'Asmit',
+  tagline: 'Computer Science student at Gettysburg College, class of 2028',
   headline: 'Hi, I\u2019m Asmit.',
   biography: [
     'I\u2019m a Computer Science student at Gettysburg College (class of 2028), minoring in Mathematics and Economics. I build products, and I treat every internship and project as founder training.',

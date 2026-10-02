@@ -7,5 +7,5 @@
     "allowImportingTsExtensions": true,
     "noEmit": true
   },
-  "include": ["vite.config.ts", "vitest.config.ts", "playwright.config.ts"]
+  "include": ["vite.config.ts", "src/content/portfolio.ts", "src/content/plainPage.ts", "src/content/seo.ts", "src/boot/bootConfig.ts", "vitest.config.ts", "playwright.config.ts"]
 }

@@ -4,6 +4,7 @@ import type { AppId } from '../../apps/types';
 export type CommandDestination =
   | { type: 'app'; app: AppId }
   | { type: 'external'; destination: 'github' | 'linkedin' | 'email' }
+  | { type: 'plain' }
   | { type: 'home' }
   | { type: 'help' }
   | { type: 'clear' }
@@ -15,6 +16,7 @@ const commands: Record<string, CommandDestination> = {
   github: { type: 'external', destination: 'github' },
   linkedin: { type: 'external', destination: 'linkedin' },
   email: { type: 'external', destination: 'email' },
+  plain: { type: 'plain' },
   home: { type: 'home' },
   help: { type: 'help' },
   clear: { type: 'clear' },

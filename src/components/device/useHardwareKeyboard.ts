@@ -5,6 +5,7 @@ import { navigateGrid } from '../../apps/gridNav';
 import type { AppId } from '../../apps/types';
 import { createInputBus } from '../../input/inputBus';
 import { controlKey, MODIFIER_KEYS, physicalKeyToControlId } from '../../input/keys';
+import { PLAIN_PATH } from '../../content/seo';
 import { availableCommands, resolveCommand } from './commandRegistry';
 import { hardwareControlById, type HardwareControl } from './hardwareControlMap';
 
@@ -141,6 +142,9 @@ export function useHardwareKeyboard({ enabled, activeApp, openApp, goHome, highl
       } else if (destination.type === 'home') {
         s.goHome();
         dispatch({ type: 'feedback', feedback: 'Home', clearBuffer: true, close: true });
+      } else if (destination.type === 'plain') {
+        dispatch({ type: 'feedback', feedback: 'Opening plain version…', clearBuffer: true, close: true });
+        window.location.assign(PLAIN_PATH);
       } else if (destination.type === 'help') {
         dispatch({ type: 'feedback', feedback: availableCommands.join(' · '), clearBuffer: true });
       } else if (destination.type === 'clear') {

@@ -10,6 +10,7 @@ import { preloadClack } from './audio/clack';
 import { hasBooted, markBooted } from './boot/bootSeen';
 import './styles/device.css';
 import './styles/screen.css';
+import { PLAIN_PATH } from './content/seo';
 import './styles/focus.css';
 import './styles/hardware-controls.css';
 import './styles/hardware-terminal.css';
@@ -157,7 +158,7 @@ export default function App() {
     <div className="studio-light" aria-hidden="true"/>
     <div id="phone" className="device-wrap"><PhoneDevice ref={stageRef} ready={ready} ring={ring} phase={introPhase} onOpenRequest={requestOpen} boot={boot} bootReducedMotion={reducedMotion} onBootStart={endBoot} onBootCard={onBootCard} onReboot={reboot} onCloseLid={closeLid}/></div>
     {/* Device-level controls. Music controls are meant to join the sound toggle here. */}
-    <div className="device-controls"><SoundToggle/></div>
+    <div className="device-controls"><a className="plain-link" href={PLAIN_PATH}>Plain version</a><SoundToggle/></div>
     {introActive && <button className="skip-intro" onClick={() => finishIntro()}>Skip intro</button>}
     {introPhase === 'open'
       ? <div className="depth-hint" aria-hidden="true"><span/>Explore inside the device</div>
